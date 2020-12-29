@@ -26,6 +26,6 @@
             "Mahadckap\\Productimize\\": ""
         }
     },
-    "minimum-stability": "alpha",
+    "minimum-stability": "dev-main",
     "prefer-stable": true
 }
