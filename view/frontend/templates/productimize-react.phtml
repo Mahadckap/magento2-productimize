@@ -1,0 +1,100 @@
+<link rel="stylesheet" href="https://devcloud.productimize.com/Promize3d/Productimize/Rhino/PZStyle.css" />
+
+
+<input type="hidden" id="web_product_id" name="web_product_id" value="6">
+<div id="three-container" style="width: 580px;height:453px; margin-top:70px"></div>
+<div id="fabric-container"></div>
+<div id="pdf-container"></div>
+
+<div id="root"></div>
+
+
+    <script>
+    var pubStaticUrl = "<?= $this->getViewFileUrl('Mahadckap_Productimize::js');?>";
+
+    require(['pdfjs-dist/build/pdf', 'pdfjs-dist/build/pdf.worker'], function(cdnPDF, devPDF) {
+        console.log('PDFJS Module1: ' , cdnPDF );
+        console.log('PDFJS Global: ' , devPDF);
+        //console.log('PDFJS Global: ' , PdfJs);
+
+        window.pdfjsLib = cdnPDF;
+        window.pdfWorker = devPDF;
+    });
+
+
+    require(['jquery', 'jquery/ui', 'react', 'reactdom', 'babel', 'THREE', 'fabric', 'TWEEN'],
+        function ($, jqyeryui, React, ReactDOM, babel, THREE, fabric, PDF, pdfWorker) {
+            window.React = React;
+            window.ReactDOM = ReactDOM;
+            window.$ = $;
+            window.jQuert = $;
+            window.THREE = THREE;
+            window.fabric = fabric;
+            window.TWEEN = TWEEN;
+           // window.PDF = PDF;
+           // window.pdfWorker = pdfWorker;
+
+            require(['jqueryUiTouch', 'OrbitControls', 'GLTFLoader'],
+                function (jqueryUiTouch, OrbitControls, GLTFLoader) {
+
+                    window.OrbitControls = OrbitControls;
+                    window.GLTFLoader = GLTFLoader;
+                    //window.axios = axios;
+                    /*
+
+                    $.getScript(pubStaticUrl + "/PromizeWrapper.js", function () {
+                        $.getScript(pubStaticUrl + "/PromizeImageSection.js", function () {
+                            $.getScript(pubStaticUrl + "/PromizeProduct.js", function () {
+
+                            });
+                        });
+                    });
+                    */
+
+                   /* $.getScript("https://devcloud.productimize.com/cms/wp-content/themes/salient-child/View360/Promize3d-jQuery/cloud/PromizeHome.js", function () {
+                        //getProductDetail();
+                    });*/
+
+
+/*
+$.getScript("https://devcloud.productimize.com/Promize3d/libraries/pdf.js", function () {
+    //getProductDetail();
+    $.getScript("https://devcloud.productimize.com/Promize3d/libraries/reactDom.js", function () {});
+    $.getScript("https://devcloud.productimize.com/Promize3d/libraries/pdf.worker.js", function () {
+        $.getScript("https://devcloud.productimize.com/Promize3d/index.js", function () {
+
+        });
+    });
+});
+*/
+                        /*$.getScript("https://devcloud.productimize.com/Promize3d/index.js", function () {
+                            //alert('god')
+                        });*/
+
+                    $.getScript("https://devcloud.productimize.com/tectonics-js/index.js", function () {
+                        //alert('god')
+
+
+                    });
+
+
+
+
+
+
+
+
+
+                });
+
+
+            window.onload = (event) => {
+                console.log('page is fully loaded');
+               //$('#maincontent').find('.main').prepend(document.getElementById('root'));
+            };
+
+        });
+
+</script>
+
+

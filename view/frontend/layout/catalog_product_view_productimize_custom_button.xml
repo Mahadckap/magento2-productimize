@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<page layout="1column" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="product.info.form.content">
+            <referenceBlock name="product.info.review" remove="true"/>
+            <referenceBlock name="reviews.tab" remove="true" />
+            <referenceBlock name="product.info.description" remove="true"/>
+            <block class="Magento\Catalog\Block\Product\View" name="productimize.view.customizebutton" as="productimize.view"  template="Mahadckap_Productimize::productimize-customize-button.phtml" before="product.view.default.configuration"/>
+            <block class="Mahadckap\Productimize\Block\Productimizehome" name="productimize.sample_images" as="productimize.sample_images" template="Mahadckap_Productimize::sample-images.phtml" after="product.info.sku"/>
+        </referenceContainer>
+        <move element="product.price.final" destination="product.info.form.content" before="product.view.default.configuration"/>
+        <move element="product.info.features" destination="product.info.main" after="product.info.addto"/>
+        <referenceContainer name="product.info.details" remove="true"/>
+        <referenceContainer name="product.info.media" htmlClass="product media pz-media" />
+        <move element="productimize.sample_images" destination="product.info.main" after="product.info.addto"/>
+    </body>
+</page>
