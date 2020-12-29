@@ -9,6 +9,6 @@
 
 \Magento\Framework\Component\ComponentRegistrar::register(
     \Magento\Framework\Component\ComponentRegistrar::MODULE,
-    'DCKAP_Productimize',
+    'Mahadckap_Productimize',
     __DIR__
 );

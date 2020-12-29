@@ -1,5 +1,5 @@
 {
-    "name": "dckap/productimize",
+    "name": "Mahadckap/productimize",
     "description": "Productimize module for customizing your needs",
     "type": "magento2-module",
     "version": "1.0.0",
@@ -13,7 +13,7 @@
     "autoload": {
         "files": [ "registration.php" ],
         "psr-4": {
-            "DCKAP\\Productimize\\": ""
+            "Mahadckap\\Productimize\\": ""
         }
     }
 }
