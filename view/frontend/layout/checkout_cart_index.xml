@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+/**
+  * @author     DCKAP <extensions@dckap.com>
+  * @package    DCKAP_Productimize
+  * @copyright  Copyright (c) 2017 DCKAP Inc (http://www.dckap.com)
+  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+  */
+ -->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+	<body>
+         <referenceBlock name="checkout.cart">
+            <block class="Magento\Checkout\Block\Cart" name="dope" template="DCKAP_Productimize::cart/item/default.phtml"  />
+        </referenceBlock>
+        <referenceContainer name="additional.product.info">
+            <block class="Magento\Checkout\Block\Cart" name="productimize_cart_item_addional_info" template="DCKAP_Productimize::cart/item/additionalinfo.phtml" cacheable="false"/>
+        </referenceContainer>
+    </body>    
+</page>

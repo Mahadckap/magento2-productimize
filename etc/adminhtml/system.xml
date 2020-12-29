@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="productimize" translate="label" sortOrder="10">
+            <label>DCKAP</label>
+        </tab>
+        <section id="productimize" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Productimize</label>
+            <tab>productimize</tab>
+            <resource>DCKAP_Productimize::config_productimize</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>General Configuration</label>
+                <field id="productmize_cloud" translate="label" type="radios" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Select CLOUD URL</label>
+                    <source_model>DCKAP\Productimize\Model\Source\ProductimizeCloud</source_model>
+                </field>
+                <!--<field id="productimize_integration_access_token" translate="button_label attribute productimize_button_label" sortOrder="2" showInDefault="1" showInWebsite="1">
+                    <button_label>Magento Integration Access Token</button_label>
+                    <frontend_model>DCKAP\Productimize\Block\Adminhtml\System\Config\LicenseWizard</frontend_model>
+                    <label/>
+                </field>-->
+                <field id="productimize_integration_magento_api_token" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Productimize with Magento Integration Access Token</label>
+                    <comment>Integration Access token from Magento.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
