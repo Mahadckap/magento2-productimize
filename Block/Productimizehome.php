@@ -97,10 +97,10 @@ class Productimizehome extends \Magento\Framework\View\Element\Template implemen
     /**
      * @return array
      */
-    public function getIdentities()
-    {
-        return [\Mahadckap\Productimize\Model\Productcustomizer::CACHE_TAG . '_' . 'list'];
-    }
+//    public function getIdentities()
+//    {
+//        return [\Mahadckap\Productimize\Model\Productcustomizer::CACHE_TAG . '_' . 'list'];
+//    }
 
     /**
      * @return $this
