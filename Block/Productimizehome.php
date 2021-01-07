@@ -6,12 +6,12 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace DCKAP\Productimize\Block;
+namespace Mahadckap\Productimize\Block;
 
 
 /**
  * Class Productcustomizer
- * @package DCKAP\Productimize\Block
+ * @package Mahadckap\Productimize\Block
  */
 class Productimizehome extends \Magento\Framework\View\Element\Template implements \Magento\Framework\DataObject\IdentityInterface
 {
@@ -30,8 +30,8 @@ class Productimizehome extends \Magento\Framework\View\Element\Template implemen
      * Productcustomizer constructor.
      * @param \Magento\Framework\View\Element\Template\Context $context
      * @param \Magento\Framework\Registry $coreRegistry
-     * @param \DCKAP\Productimize\Model\ResourceModel\Productcustomizer\CollectionFactory $productcustomizerCollectionFactory
-     * @param \DCKAP\Productimize\Model\Productcustomizer $productcustomizerFactory
+     * @param \Mahadckap\Productimize\Model\ResourceModel\Productcustomizer\CollectionFactory $productcustomizerCollectionFactory
+     * @param \Mahadckap\Productimize\Model\Productcustomizer $productcustomizerFactory
      * @param \Magento\Catalog\Model\ProductFactory $_productloader
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param array $data
@@ -99,7 +99,7 @@ class Productimizehome extends \Magento\Framework\View\Element\Template implemen
      */
     public function getIdentities()
     {
-        return [\DCKAP\Productimize\Model\Productcustomizer::CACHE_TAG . '_' . 'list'];
+        return [\Mahadckap\Productimize\Model\Productcustomizer::CACHE_TAG . '_' . 'list'];
     }
 
     /**
