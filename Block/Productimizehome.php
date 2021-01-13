@@ -16,6 +16,10 @@ namespace Mahadckap\Productimize\Block;
 class Productimizehome extends \Magento\Framework\View\Element\Template implements \Magento\Framework\DataObject\IdentityInterface
 {
     /**
+     * Productimize cache tag
+     */
+    const CACHE_TAG = 'productimize_item';
+    /**
      * @var
      */
     protected $_storeManager;
@@ -99,7 +103,7 @@ class Productimizehome extends \Magento\Framework\View\Element\Template implemen
      */
     public function getIdentities()
     {
-        return [\Mahadckap\Productimize\Model\Productcustomizer::CACHE_TAG . '_' . 'list'];
+        return [self::CACHE_TAG . '_' . 'list'];
     }
 
     /**
