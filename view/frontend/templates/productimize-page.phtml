@@ -1,0 +1,1014 @@
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<?php $defaultConf = '';
+$defaultConf = $block->getProduct()->getData('default_configurations');
+?>
+
+<div class="productimise-container"   data-mage-init='{"customisedOptions":{}}'/>
+<div class="pz-product-container" id="pz-product-container">
+    <div class="pz-display-price" id="pz-display-price" >$ <?php echo number_format($block->getProduct()->getPrice(), 2, '.', ''); ?></div>
+    <div class="pz-display-button-grp">
+        <button type="button" class="pz-room active" id="magento_customize_button">
+            <i class="fa fa-eye" aria-hidden="true"></i>
+            <?php echo $block->escapeHtml(__('View in Room'));
+            ?>
+        </button>
+
+        <?php echo $block->getChildHtml('productimize.view.customize.button'); ?>
+        <button type="button" class="pz-cancel" id="productimize_customize_cancel_button" style="display:none">
+            <i class="fa fa-paint-brush" aria-hidden="true"></i>
+            <?php echo $block->escapeHtml(__('Cancel'));
+            ?>
+        </button>
+    </div>
+</div>
+<input type="hidden" value='<?php echo $defaultConf;?>' id="pz_magento_default_options" />
+<input type="hidden" value='<?php echo $block->getProduct()->getData('product_level');?>' id="pz_platform_product_level" />
+<input type="hidden" value='' id="pz_magento_framedata" />
+<input type="hidden" value='' id="pz_platform_custom_returndata" />
+<div class="pz_data" id="pz_data">
+
+
+    <?php
+if($defaultConf) {
+    $parsedDefCon = json_decode($defaultConf, 1);
+    $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+    $productFactory = $objectManager->create('Magento\Catalog\Model\ProductFactory');
+    $_imageHelper = $objectManager->get('Magento\Catalog\Helper\Image');
+    foreach ($parsedDefCon as $key => $value) {
+
+        $keyRemoved = trim(str_replace("default_sku", "", $key));
+
+        $currProduct = $productFactory->create()->loadByAttribute('sku', $value);
+        if (isset($currProduct) && !empty($currProduct) && $currProduct->getId()) {
+
+            $imageUrl = $_imageHelper->init($currProduct, 'small_image', ['type' => 'small_image'])->keepAspectRatio(true)->resize('50', '50')->getUrl();
+
+            echo "<div class='pz-default'>";
+            echo "<div class='pz-default-head'>";
+            echo ucfirst(str_replace("_", " ", $keyRemoved));
+            echo "</div>";
+            echo "<div><img width='50' height='50' src='" . $imageUrl . "'/></div>";
+            echo "<div class='pz-default-val'>" . $value . '</div></div>';
+
+        }
+
+
+    }
+}
+
+    ?>
+    <br/>
+    <p>
+        <i>Default product specications may be changed using our</i> <a href=""#" onClick="">art customizer.</a>
+    </p>
+</div>
+<?php $magentoProductId = 17; //$block->getProduct()->getId();//17
+
+//echo " asa URL ".$block->getProduct()->getUrl();
+
+//echo $block->getProduct()->getUrlModel()->getUrl($block->getProduct());
+
+if ($block->getProduct()->getUrlModel()->getUrl($block->getProduct()) != "https://m2.productimize.com/productimize-product.html") {
+    $magentoProductId = 16;
+}
+
+?>
+<input type="hidden" name="pz_objects" id="pz_objects" value="" />
+<input type="hidden" name="pz_cart_properties" id="pz_cart_properties" value="" />
+<input type="hidden" id="frame_defalt" value="" />
+<div id="productimize_container"></div>
+
+<style>
+
+    #block-upsell-heading {
+        display:none;
+    }
+    .pz-product-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+    }
+
+    .pz_product_info_main button {
+        text-transform: uppercase;
+        padding: 1.5rem 2.5rem;
+        box-shadow: none !important;
+        margin-left: 1rem;
+    }
+
+    .pz-display-price {
+        color: #b71804;
+        font-weight: 600;
+        font-size: 25px;
+    }
+
+    .pz-customize {
+        background: #757063;
+        color: white;
+        border-color: #757063;
+    }
+
+    .pz-room {
+        background: white;
+        border-color: #d8d9d7;
+        color: #757063;
+    }
+
+    .pz-cancel {
+        background: #d8d9d7;
+        color: #4c4d4f;
+        border-color: #d8d9d7;
+    }
+
+    #product-price-1 .price,
+    span.price-container.price-final_price.tax.weee,
+    .product-info-stock-sku .stock.available {
+        display: none;
+    }
+
+    .box-tocart {
+        margin: 1rem 0;
+    }
+
+    .box-tocart .fieldset {
+        display: flex;
+        align-items: center;
+        border-top: 1px solid #c9c9c9;
+        border-bottom: 1px solid #c9c9c9;
+        padding: 1rem 0;
+    }
+
+
+    .field.qty {
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        margin-right: 3rem !important;
+    }
+
+    .field.qty .label {
+        margin-right: 1rem !important;
+    }
+
+    .field.qty .control input {
+        height: 53px;
+        border-radius: 5px;
+    }
+
+    .box-tocart .actions {
+        width: 100%
+    }
+
+    #product-addtocart-button {
+        background: #b71804;
+        text-transform: uppercase;
+        border-color: #b71804;
+        margin: 0;
+    }
+
+    .product-info-main .product-info-price {
+        border-bottom: 1px solid #c9c9c9 !important;
+    }
+
+    .product.attribute.sku {
+        color: #919191;
+    }
+
+    .page-title-wrapper.product .page-title {
+        color: #010101;
+    }
+
+    .product-add-form {
+        padding: 0 !important;
+    }
+
+    .pz_data p{
+        color: #4e4f51;
+        margin-bottom: 2rem;
+    }
+
+    .pz-default {
+        display: flex;
+        margin: 1rem 0;
+    }
+
+    .pz-default-head {
+        color: #4c4d4f;
+        margin-right: 1rem;
+    }
+
+    .pz-default-val{
+        margin-left: 0.3rem;
+    }
+    .pz-display-button-grp.pz_product_info_main {
+        display: flex;
+    }
+
+
+    .pz-hover > div {
+        position: relative;
+    }
+    .pz-hover > div:before {
+        position: absolute;
+        content: "";
+        top: -7px;
+        left: 2px;
+        border: 7px solid transparent;
+        border-top: 0;
+        border-bottom-color: #333333;
+    }
+    .pz-hover {
+        position: fixed;
+        display: none;
+        border: 0;
+        z-index: 10;
+        color: #fff;
+        word-break: break-word;
+        font-size: 11px;
+        font-weight: bold;
+        background-color: #333333;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        line-height: 16px;
+        -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+        -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+        -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+        -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+        padding: 4px 5px;
+        border-radius: 4px;
+        max-width: 300px;
+        width: auto;
+    }
+    output {
+  position: absolute;
+  /* width: 15px;
+  height: 24px;
+  background-color: #fff;
+  border-radius: 3px;
+  color: #777;
+  font-size: .8em;
+  line-height: 24px;
+  text-align: center; */
+  top:38px;
+}
+li.pz-design-item.selectedFrame {
+    border: 1px solid;
+}
+
+
+    @media screen and (max-width: 768px) {
+        .customize-button {
+            width: 100%;
+        }
+
+
+
+    }
+</style>
+<script type="text/javascript">
+    var pzSelectedOptions = {
+        // 'media' : {},
+        // 'treatment' : {},
+        // 'size': {},
+        // 'frame': {},
+        // 'liner': {},
+        // 'topMat': {},
+        // 'bottomMat': {}
+    }
+    let searchfilter = '';
+
+
+function getGlassDimention  (artworkData){
+    var range = document.getElementsByName("rangeVal")[0].value
+    var rangeDimention = range.split('×')
+    return [rangeDimention[0], rangeDimention[1]];
+
+}
+
+    require(
+        [
+            'jquery',
+            'mage/validation',
+            'fabric',
+            'jquery/ui',
+            'domReady!',
+            'selectric',
+            'owlCarousel'
+        ],
+        function ($,
+                  validation, fabric) {
+
+            'use strict';
+
+
+
+                // for styles
+            var info_main = $('#productimize_customize_button').parent();
+
+
+            info_main.addClass('pz_product_info_main');
+            var customizer_api_data;
+            var returnedData;
+            var returnedFrameData;
+            var defaultConf = '<?php echo $defaultConf; ?>';
+
+            var defaultConfigJson = JSON.parse(defaultConf);
+            var mediaDefault = defaultConfigJson.medium_default_sku;
+            var treatDefault = defaultConfigJson.treatment_default_sku;
+            var frameDefault = defaultConfigJson.frame_default_sku;
+            $('#frame_defalt').val(frameDefault);
+            // product configuration level
+            var product_level = $('#pz_platform_product_level').val();
+            let framedetail = '', locSearchVal = '',colorSearchVal = [], widthSearchVal = '', frameColorFilter = {}, colorSubVal = [], typeSearchVal = '', framesizefilter = {}, frametypefilter = {};
+
+            // Click of add customization button
+
+            $("#productimize_customize_button").on('click', function () {
+                jQuery('body').trigger('processStart');
+
+                $('#magento_customize_button').removeClass('active');
+
+
+                if ($('#product_addtocart_form').find('#pz_objects').length === 0) {
+                    $('#product_addtocart_form').append($('#pz_objects'));
+                }
+                if ($('#product_addtocart_form').find('#pz_cart_properties').length === 0) {
+                    $('#product_addtocart_form').append($('#pz_cart_properties'));
+                }
+
+
+
+
+                var productimizeCustomizationUrl = 'productimize/index/index';
+                console.log("sadjhjas");
+
+                $.ajax({
+                    showLoader: false,
+                    url: productimizeCustomizationUrl,
+                    data: {
+                        product: "<?php echo $magentoProductId;?>",
+                        //product: $('.price-box').attr('data-product-id'),
+                        // optAttributes: attributes,
+                        //selectedAttributes: selectedOptAttr,
+                        isAjax: 1
+                    },
+                    type: "POST",
+                    //dataType: 'json',
+                    success: function (data) {
+                        jQuery('body').trigger('processStop');
+
+
+
+                        //$("#productimize_response").val("");
+                        //$('.pz_product_info_main').css('width', '100%');
+                        //$(".page-title-wrapper.product").css('float', 'right');
+                        // $(".reviews-actions").css('display', 'none');
+                        //$(".product-social-links").css('display', 'none');
+
+
+                        //
+
+
+                        //$('.pz-custom-content-wrapper').append('<div class="magento-heading"><h1></h1> <p></p></div>')
+
+
+                        $('.box-tocart').css('display', 'none')
+                        $('#productimize_container').html(data.content);
+                        $('#productimize_customize_button').css('display', 'none');
+                        $('.media').css('display', 'none');
+
+
+                        var events = [ "create", "start", "stop", "slide", "change" ];
+                        $.widget( "app.slider", $.ui.slider, {
+                            _getCreateEventData: function() {
+                                return { value: this.value() };
+                            },
+                            _init: function() {
+                                var steps = this.options.steps;
+                                if ( $.isArray( steps ) ) {
+                                    this.option( "max", steps.length - 1 );
+                                }
+                            },
+                            _trigger: function( name, e, ui ) {
+                                var steps = this.options.steps;
+                                if ( !$.isArray( steps ) ) {
+                                    return this._superApply( arguments );
+                                }
+                                if ( $.inArray( name, events ) >= 0 ) {
+                                    return this._superApply([
+                                        name,
+                                        e,
+                                        $.extend( ui, {
+                                            stepValue: steps[ ui.value ]
+                                        })
+                                    ]);
+                                }
+                                return this._superApply( arguments );
+                            }
+                        });
+
+                        // $("#slider").slider({
+                        //     range: "min",
+                        //     steps: [ 1, 12, 2, 5, 8, 13 ],
+                        //     change: function( e, ui ) {
+                        //     var control = $('#slider');
+                        //     var output = control.next('output');
+                        //     output.css('left',$('.ui-slider-handle')[0].style.left).text(ui.stepValue);
+                        //     },
+                        //     create: function( e, ui ) {
+                        //         var control = $('#slider');
+                        //         var output = control.next('output');
+                        //         output.css('left',$('.ui-slider-handle')[0].style.left).text(ui.stepValue);
+                        //     }
+                        // });
+
+                        //$('.productimize_container').html(data.content);
+                        $('.productimize_container').next().css('display', 'none');
+                        $('.description').css('display', 'none');
+                        $('.overview').css('display', 'none');
+                        $(".product-detail-section").addClass("product-detail-customize-section");
+                        $('#sample_images_custom_product').css('display', 'none');
+
+                        $('#productimize_customize_cancel_button').css("display", "block")
+                        $('#pz_data').css("display", "none");
+
+                        $('#pz-display-price').css("visibility", "hidden");
+                        $('#pz_magento_framedata').val(JSON.stringify(data.FrameName));
+                        $('#pz_platform_custom_returndata').val(JSON.stringify(data.returndata));
+
+                        returnedData = data.returndata;
+                        customizer_api_data = data.returndata;
+                        var mediahtml = '<option value="" class="option">Select Media</option>';
+                        var mediaArr = [];
+                        $.each(returnedData, function(key, data) {
+                            if(data['display_to_customer']) {
+                                mediaArr.push(key);
+                                mediahtml += '<option data-sku="'+key+'" value="'+key+'" class="option">'+data['display_name']+'</option>';
+                            }
+                        });
+                        $('.pz-medium select.medium-select-elem').append(mediahtml);
+                        if($.inArray(mediaDefault, mediaArr) !== -1) {
+                            $('.pz-medium select.medium-select-elem').val(mediaDefault).trigger('change');
+                        }
+                        // else if(mediaDefault != 'undefined') {
+                        //     var html = '<option selected data-sku="'+mediaDefault+'" value="'+mediaDefault+'" class="option">'+mediaDefault+'</option>';
+                        //     $('.pz-medium select.medium-select-elem').append(html);
+                        // }
+
+                        returnedFrameData = data.FrameName;
+
+                        $('.pz-medium .medium-select-elem').selectric();
+                        $('.pz_treatment .treatment-select-elem').selectric();
+
+
+
+
+                        if(product_level != 1) {
+                            $('.pz-medium select.medium-select-elem, .pz_treatment select.treatment-select-elem').prop('disabled', true);
+                        }
+                    },
+                    error: function () {
+                        jQuery('body').trigger('processStop');
+                        alert('Error occurred');
+                    }
+                });
+
+            });
+
+            function getParentClass(thisval) {
+                let arrayy = {"pz-frame":"frameli","pz-top-mat":"topmatli","pz-bottom-mat":"bottommatli","pz-liner":"linerli"};
+                console.log($(thisval).parents('.pz-custom-item-body').attr('class'))
+                let parentClass = $(thisval).parents('.pz-custom-item-body').attr('class').replace(/\s/g,'.');
+                let splitClass = $(thisval).parents('.pz-custom-item-body').attr('class').split(' ');
+                console.log(searchfilter)
+                if(arrayy[splitClass[1]] == searchfilter) {
+                }   else {
+                    if(searchfilter != '')  {
+                        locSearchVal = '';
+                        colorSearchVal = [];
+                        colorSubVal = [];
+                        widthSearchVal = '';
+                        typeSearchVal = '';
+                        jQuery('.maincolorinput, .subcolorinput, .allcolorinput').removeAttr('checked');
+                        jQuery('.width > li').css('display', 'block')
+                        jQuery('.pz-optiontypesearch li').css('display', 'block')
+                        jQuery('.pz-design-item').css('display', 'block')
+                    }
+                    searchfilter = arrayy[splitClass[1]];                    
+                }
+                console.log(searchfilter);
+                return [parentClass,arrayy[splitClass[1]]]
+            }
+
+            $(document).on("click",".pz-optioninputsearch",function()  {
+                let classarray = getParentClass(this);
+                locSearchVal = $('.'+classarray[0]).find('.locatesearch').val();
+                frameSearch(0, classarray);
+            })
+
+            $(document).on("click",".pz-colorsearch",function()  {
+                let classarray = getParentClass(this);
+                let colSear = $('.'+classarray[0]).find('.searchCol').val().toLowerCase().replace(/\s/g, '');
+                console.log('testest', colSear)
+                $('.'+classarray[0]).find('.maincolor').find('.checkmainarea,.checkarea').css('display', 'none')
+                $('.'+classarray[0]).find('.maincolor').find("[id*='"+colSear+"']").css('display', 'block')
+            })
+
+            //$('.locatesearch').keypress(function (e) {
+            $(document).on("keypress",".locatesearch",function(e)  {
+            var key = e.which;
+            if(key == 13)  // the enter key code
+            {
+                let classarray = getParentClass(this);
+                locSearchVal = $('.'+classarray[0]).find('.locatesearch').val();
+                frameSearch(0, classarray);
+            }
+            }); 
+
+            $(document).on("click",".widthli",function()  {
+                let classarray = getParentClass(this);
+                if($(this).text().toLowerCase().includes('select')) {
+                    widthSearchVal = '';
+                }   else {
+                    widthSearchVal = $(this).text();
+                }
+                frameSearch(2, classarray);
+            })
+
+            $(document).on("click",".typeli",function()  {
+                let classarray = getParentClass(this);
+                if($(this).text().toLowerCase().includes('select')) {
+                    typeSearchVal = '';
+                }   else {
+                    typeSearchVal = $(this).text();
+                }
+                frameSearch(3, classarray);
+            })
+
+            $(document).on("click",".allcolorinput",function()  {
+                let classarray = getParentClass(this);
+                console.log('classarray',classarray)
+                colorSearchVal = [];
+                colorSubVal = [];
+                var ischecked= $(this).is(':checked');
+                if(ischecked == false)  {
+                    jQuery('.maincolorinput, .subcolorinput, .allcolorinput').prop('checked', false);
+                }   else {
+                    jQuery('.maincolorinput, .subcolorinput, .allcolorinput').prop('checked', true);
+                    colorSearchVal = $(".maincolorinput:checked").map(function(){
+                        return $(this).val();
+                    }).get();
+                    colorSubVal = $(".subcolorinput:checked").map(function(){
+                        return $(this).val();
+                    }).get();
+                }
+                frameSearch(1, classarray);
+            })
+
+            $(document).on("click",".clearcolor",function()  {
+                let classarray = getParentClass(this);
+                colorSearchVal = [];
+                colorSubVal = [];
+                jQuery('.maincolorinput, .subcolorinput, .allcolorinput').removeAttr('checked');
+                frameSearch(1, classarray);
+            })
+
+
+            $(document).on("click",".maincolorinput",function()  {
+                console.log($(this));
+                let classarray = getParentClass(this);
+                console.log('classarray',classarray)
+                var ischecked= $(this).is(':checked');
+                jQuery('.allcolorinput').removeAttr('checked');
+                if(ischecked == false)  {
+                    var index = colorSearchVal.indexOf($(this).val());
+                    if (index !== -1) {
+                        colorSearchVal.splice(index, 1);
+                    }
+                }   else {
+                    colorSearchVal.push($(this).val());
+                }
+                if(colorSearchVal.length == 0 && colorSubVal.length == 0)   {
+                    widthSearchVal = '';
+                    typeSearchVal = '';
+                }
+                frameSearch(1, classarray);
+            })
+
+            $(document).on("click",".subcolorinput",function()  {
+                let classarray = getParentClass(this);
+                var ischecked= $(this).is(':checked');
+                jQuery('.allcolorinput').removeAttr('checked');
+                if(ischecked == false)  {
+                    var index = colorSubVal.indexOf($(this).val());
+                    if (index !== -1) {
+                        colorSubVal.splice(index, 1);
+                    }
+                }   else {
+                    colorSubVal.push($(this).val());
+                }
+                if(colorSearchVal.length == 0 && colorSubVal.length == 0)   {
+                    widthSearchVal = '';
+                    typeSearchVal = '';
+                }
+                frameSearch(1, classarray);
+            })
+
+            $(document).on("click",".pz-searchcolorlabel, .pz-searchwidthlabel, .pz-searchtypelabel",function()  {
+                $(this).next().toggleClass('active');
+            });
+        //     function frameContent(selectedMedia, selectedTreatment) {
+        //         framedetail = returnedFrameData;
+        //         var frameTypesAllowed = [];
+        //         $.each(returnedData[selectedMedia]['treatment'][selectedTreatment]['frames'], function(framekey, framedata) {
+        //             frameTypesAllowed.push(framekey);
+        //         });
+        //         frameTypesAllowed = ["Standard"];
+
+        //         var selectedFrameText = '';
+        //         var mediaframehtml = '';
+        //         let widthdata = [];
+        //         let widthLi = '<li class="pz-design-item widthli" id="widthli0">Select Width</li>';
+        //         let colorlist = '<div class="clearcolor">CLEAR ALL</div><div class="maincolor"><input type="checkbox" id="All Color" class="allcolorinput" name="All Color" value="All Color" /><label for="All Color"> All Color</label></div>';
+        //         $.each(returnedFrameData, function(framekey, framedata) {
+        //             if($.inArray( framedata['m_frame_type'], frameTypesAllowed ) !== -1)   {
+        //                 if(parseFloat(framedata['m_frame_rabbet_depth']) >= parseFloat(returnedData[selectedMedia]['treatment'][selectedTreatment]['min_rabbet_depth'])) {
+        //                     if($.inArray( framedata['m_frame_width'], widthdata ) == -1)   {
+        //                         console.log(framedata)
+        //                         widthdata.push(framedata['m_frame_width']);
+        //                         let dataKey = framedata['m_frame_width'].replace(/\./g, "")+','+framedata['m_color_family']+','+framedata['m_frame_type'];
+        //                         widthLi += '<li class="pz-design-item widthli" dataKey="'+dataKey+'" id="widthli'+framedata['m_frame_width'].replace(/\./g, "")+'">'+framedata['m_frame_width']+'</li>';
+        //                     }
+
+        //             if(framedata['m_color_family']) {
+        //                 if(!frameColorFilter[framedata['m_color_family']])  {
+        //                     frameColorFilter[framedata['m_color_family']] = [];
+        //                     framesizefilter[framedata['m_color_family']] = [];
+        //                     frametypefilter[framedata['m_color_family']] = [];
+        //                 }
+        //                 if($.inArray( framedata['m_color_frame'].trim(),frameColorFilter[framedata['m_color_family']] ) == -1)   {
+        //                     frameColorFilter[framedata['m_color_family']].push(framedata['m_color_frame'].trim());
+        //                     framesizefilter[framedata['m_color_family']].push(framedata['m_frame_width'].replace(/\./g, ""));
+        //                     frametypefilter[framedata['m_color_family']].push(framedata['m_frame_type'].replace(/\./g, ""));
+        //                 }
+        //             }
+        //             var selected = '';
+
+        //             if(frameDefault == framedata['m_sku']) {
+        //                 selected = 'selectedFrame';
+        //                 selectedFrameText = framedata['m_sku']+' / '+framedata['m_color_family'];
+
+
+        //                 const data = {
+        //                     'sku':framedata['m_sku'],
+        //                     'width': framedata['m_frame_width']
+        //                 }
+
+        //                 callFrameData(data);
+        //             }
+        //             mediaframehtml += '<li class="pz-design-item '+selected+'" data-color="'+framedata['m_color_family']+'" data-sku="'+framedata['m_sku']+'" data-width="'+framedata['m_frame_width']+'">'+
+        //                                 '<div class="pz-design-item-content">'+
+        //                                     '<div class="pz-design-item-img" style="background: url(&quot;https://devcloud.productimize.com/v3/promizenode/./assets/images/61/OptionImages/StandardImage/IMAGE-1608031183157.PNG&quot;); width: 50px; height: 50px;"></div>'+
+        //                                     '<div class="pz-design-item-name">'+framedata['m_sku']+' </div>'+
+        //                                     '<div class="pz-design-item-name">'+framedata['m_frame_width']+'"</div>'+
+        //                                 '</div>'+
+        //                             '</li>';
+        //             }
+        //             }
+        //         });
+
+        //         $.each(frameColorFilter, function(frameColorFilterkey, frameColorFilterdata) {
+        //             // console.log(framesizefilter[frameColorFilterkey])
+        //             // console.log(frametypefilter[frameColorFilterkey])
+        //             var joinkeys = framesizefilter[frameColorFilterkey].concat(frametypefilter[frameColorFilterkey]).concat(frameColorFilterkey.replace(/\s/g, ''));
+        //             console.log(joinkeys)
+        //             colorlist += '<div class="maincolor"><div dataKey="'+joinkeys+'" class="checkmainarea" id="maincolor'+frameColorFilterkey.replace(/\s/g, '')+'"><input type="checkbox" class="maincolorinput" id="'+frameColorFilterkey+'" name="'+frameColorFilterkey+'" value="'+frameColorFilterkey+'"><label for="'+frameColorFilterkey+'"> '+frameColorFilterkey+'</label></div><div class="subcolor">';
+        //             $.each(frameColorFilterdata, function(key,val) {
+        //                 colorlist += '<div class="checkarea" id="subcolor'+val.replace(/\s/g, '')+'"><input type="checkbox" class="subcolorinput" id="'+val+'" name="'+val+'" value="'+val+'"><label for="'+val+'"> '+val+'</label></div>';
+        //             })
+        //             colorlist +='</div></div>';
+        //         });
+        //         $('.colorlist').html(colorlist);
+        //         $('.frameli').html(mediaframehtml);
+
+        //         $('.frameli').owlCarousel('destroy');
+        //         $('.frameli').owlCarousel({
+        //             loop: false,
+        //             margin: 10,
+        //             nav: true,
+        //             navText: [
+        //     '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
+        //     '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
+        // ],
+        //             responsive: {
+        //                 0: {
+        //                     items: 1
+        //                 },
+        //                 600: {
+        //                     items: 3
+        //                 },
+        //                 1000: {
+        //                     items: 5
+        //                 }
+        //             }
+        //         });
+
+        //         $('.pz-optionwidthsearch ul').append(widthLi);
+        //         $('.pz-item-selected-frame').html(selectedFrameText);
+        //     }
+            $(document).on("click", function(event){
+                if(!$(event.target).closest(".pz-optionwidthsearch").length){
+                    $('.pz-optionwidthsearch').find('.active').removeClass('active');
+                }
+                if(!$(event.target).closest(".pz-optioncolorsearch").length){
+                    $('.pz-optioncolorsearch').find('.active').removeClass('active');
+                }
+                if(!$(event.target).closest(".pz-optiontypesearch").length){
+                    $('.pz-optiontypesearch').find('.active').removeClass('active');
+                }
+            })
+            function frameSearch(searchfil,tabFrom) {                
+                $('.pz-optionwidthsearch,.pz-optiontypesearch').find('.active').removeClass('active');
+                var mediaframehtml = '';
+                let maincolorshowarray = [], subcolorshowarray = [], widthshowarray = [], typeshowarray = [];
+                let classKey = '.'+tabFrom[1]+' li';
+                $(classKey).each(function() {
+                    let matchedVal = 1;
+                    if(locSearchVal != '')  {
+                        if(!$(this).attr('data-sku').toLowerCase().includes(locSearchVal.toLowerCase()))  {
+                            matchedVal = 0;
+                        }
+                    }
+                    if(colorSearchVal.length > 0)    {
+                        if($.inArray( $(this).attr('data-color'), colorSearchVal ) == -1)   {
+                            matchedVal = 0;
+                        }
+                    }
+                    if(colorSubVal.length > 0)    {
+                        if($.inArray( $(this).attr('data-color-frame'), colorSubVal ) == -1)   {
+                            matchedVal = 0;
+                        }
+                    }
+                    if(widthSearchVal != '')    {
+                        if($(this).attr('data-width') != widthSearchVal)  {
+                            matchedVal = 0;
+                        }
+                    }
+                    if(typeSearchVal != '')    {
+                        if($(this).attr('data-type') != typeSearchVal)  {
+                            matchedVal = 0;
+                        }
+                    }
+                    if(matchedVal == 1) {
+                        if(searchfil > 0) {
+                            console.log($(this).attr('data-width'), widthshowarray)
+                            if($.inArray( $(this).attr('data-color'), maincolorshowarray ) == -1)   {
+                                maincolorshowarray.push($(this).attr('data-color'));
+                            }
+                            if($.inArray( $(this).attr('data-color-frame'), subcolorshowarray ) == -1)   {
+                                subcolorshowarray.push($(this).attr('data-color-frame'));
+                            }
+                            if($.inArray( $(this).attr('data-width'), widthshowarray ) == -1)   {
+                                widthshowarray.push($(this).attr('data-width'));
+                            }
+                            if($.inArray( $(this).attr('data-type'), typeshowarray ) == -1)   {
+                                typeshowarray.push($(this).attr('data-type'));
+                            }
+                        }
+                        $(this).parents('.owl-item').css('display','block')
+                        $(this).css('display','block')
+                    }   else {
+                        $(this).parents('.owl-item').css('display','none')
+                        $(this).css('display','none')
+                    }
+                });
+                console.log(widthshowarray)
+                console.log(typeshowarray)
+                console.log(maincolorshowarray)
+                console.log(subcolorshowarray)
+                // let tabstart = '.'+tabFrom;
+                console.log(tabFrom[0])
+                if(widthshowarray.length > 0)   {                    
+                    $('.'+tabFrom[0]).find('.width > li').css('display', 'none')
+                    $('.'+tabFrom[0]).find('#widthli0').css('display', 'block')
+                    $.each(widthshowarray, function(widthkey, widthdata) {
+                        if(widthdata!=undefined)    {
+                            console.log(widthkey, widthdata)
+                            let id= '#widthli'+widthdata.replace(/\./g, "");
+                            console.log(id);
+                            $(id).css('display', 'block')
+                        }
+                    })
+                }
+                if(typeshowarray.length > 0)   {
+                    $('.'+tabFrom[0]).find('.pz-optiontypesearch li').css('display', 'none')
+                    $('.'+tabFrom[0]).find('#typeli0').css('display', 'block')
+                    $.each(typeshowarray, function(typekey, typedata) {
+                        if(typedata != undefined)   {
+                            $('.'+tabFrom[0]).find('#typeli'+typedata).css('display', 'block')
+                        }
+                    })
+                }
+        //         $('.frameli').owlCarousel('destroy');
+        //         $('.frameli').owlCarousel({
+        //             loop: false,
+        //             margin: 10,
+        //             nav: true,
+        //             navText: [
+        //     '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
+        //     '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
+        // ],
+        //             responsive: {
+        //                 0: {
+        //                     items: 1
+        //                 },
+        //                 600: {
+        //                     items: 3
+        //                 },
+        //                 1000: {
+        //                     items: 5
+        //                 }
+        //             }
+        //         });
+
+
+            }
+
+
+            $(document).on("change",".pz-medium .medium-select-elem",function() {
+                //var selectedMedia = $(this).find(':selected').attr('data-sku');
+                var selectedText = $(this).find(':selected').text();
+                var selectedMedia = $(this).find(':selected').val();
+
+                var selectedTreatment = $('.pz_treatment select.treatment-select-elem').find(':selected').val();
+                if(selectedMedia != '') {
+                    $('.medium-treat .pz-item-selected-medtrt').html(selectedText);
+                }
+                var treatArr = [];
+                var treathtml = '<option value="" class="option">Select Treatment</option>';
+                $.each(customizer_api_data, function(key, data) {
+                    if(key == selectedMedia) {
+                        $.each(data['treatment'], function(trkey, trdata) {
+                            if(trdata['display_to_customer']) {
+                                treatArr.push(trkey);
+                                treathtml += '<option data-sku="'+trkey+'" value="'+trkey+'" class="option">'+trdata['display_name']+'</option>';
+                            }
+                        });
+                        // else if(treatDefault != 'undefined') {
+                        //     console.log('inside elseif');
+                        //     var html = '<option selected data-sku="'+treatDefault+'" value="'+treatDefault+'" class="option">'+treatDefault+'</option>';
+                        //     $('.pz-medium select.treatment-select-elem').append(html);
+                        // }
+                        return true;
+                    }
+                });
+                console.log('after treat loads' , treathtml );
+
+                $('.pz_treatment select.treatment-select-elem').html(treathtml);
+                if($.inArray(treatDefault, treatArr) !== -1 && selectedMedia == mediaDefault) {
+                    $('.pz_treatment select.treatment-select-elem').val(treatDefault).trigger('change');
+                }
+                // if($.inArray(selectedTreatment, treatArr) !== -1) {
+                //     $('.pz_treatment select.treatment-select-elem').val(selectedTreatment).trigger('change');
+                // }
+                $('.pz_treatment select.treatment-select-elem').selectric('refresh');
+            });
+            $(document).on("change",".pz_treatment .treatment-select-elem",function() {
+                var selectedText = $(this).find(':selected').text();
+                var selectedVal = $(this).find(':selected').val();
+
+                var selectedmedia = $(".medium-select-elem").find(':selected').text();
+                var mediaVal = $(".medium-select-elem").find(':selected').val();
+
+                if(selectedVal != '') {
+                    //frameContent(mediaVal, selectedVal);
+                    var finalText = selectedmedia +'/'+selectedText;
+                } else {
+                    var finalText = selectedmedia;
+                }
+
+                $('.medium-treat .pz-item-selected-medtrt').html(finalText);
+                //callTreatmentData(this);
+                setPZSelectedOptions({'name': 'treatment', 'sku' : selectedVal, 'displayName': selectedText});
+            });
+            $(document).on("click", ".pz-custom-item-header", function(e) {
+
+                /*if($(this).parent('.pz-custom-items').hasClass('open')){
+                    $(this).parent('.pz-custom-items').removeClass("open");
+                } else {*/
+
+
+
+                    let selectedMedia = $(".medium-select-elem").val();
+                    let selectedTreatment = $(".treatment-select-elem").val();
+                    console.log(selectedMedia,',,,,',selectedTreatment)
+                    console.log(selectedMedia.length,',,,,',selectedTreatment.length)
+                    if(selectedMedia != '' && selectedTreatment != '')  {
+                        $('.pz-custom-items').removeClass("open");
+                        $(this).parent('.pz-custom-items').addClass("open");
+                    }   else {
+                        $('.pz-custom-items').removeClass("open");
+                        $('.medium-option').addClass("open");
+                        if($('.customred').length == 0) {
+                            $('.medium-option').append('<div class="customred">*Please select media and treatment to continue</div>')
+                            $('.customred').fadeOut(5000);
+                        }   else {
+                            $('.customred').show().fadeOut(5000);
+                        }
+                    }
+                //}
+            });
+            $(document).on("click", ".frameli li", function(e) {
+                $('.pz-design-item-list.frameli li').removeClass('selectedFrame');
+                $(this).addClass('selectedFrame');
+                var selectedSku = $(this).attr('data-sku');
+                var selectedColor = $(this).attr('data-color');
+                var selectedFrameText = '';
+                if(selectedSku != '' && selectedColor != '') {
+                    var selectedFrameText = selectedSku+'/'+selectedColor;
+                }
+                $('.pz-item-selected-frame').html(selectedFrameText);
+                $('.pz-item-selected-frame').attr('data-sku', selectedSku);
+            });
+            $("#productimize_customize_cancel_button").on('click', function () {
+
+                $('#magento_customize_button').addClass('active');
+
+
+                $('.box-tocart').css('display', 'block')
+                $('#productimize_container').html("");
+                $('#productimize_customize_button').css('display', 'block');
+                $('.media').css('display', 'block');
+                //$('.productimize_container').html(data.content);
+                $('.productimize_container').next().css('display', 'block');
+                $('.description').css('display', 'block');
+                $('.overview').css('display', 'block');
+                //$(".product-detail-section").addClass("product-detail-customize-section");
+                $('#sample_images_custom_product').css('display', 'block');
+
+                $('#productimize_customize_cancel_button').css("display", "none")
+                $('#pz_data').css("display", "block")
+                $('#pz-display-price').css("visibility", "visible");
+
+            });
+
+            $("#magento_customize_button").on('click', function () {
+
+                $('#magento_customize_button').addClass('active');
+
+
+                $('.box-tocart').css('display', 'block')
+                $('#productimize_container').html("");
+                $('#productimize_customize_button').css('display', 'block');
+                $('.media').css('display', 'block');
+                //$('.productimize_container').html(data.content);
+                $('.productimize_container').next().css('display', 'block');
+                $('.description').css('display', 'block');
+                $('.overview').css('display', 'block');
+                //$(".product-detail-section").addClass("product-detail-customize-section");
+                $('#sample_images_custom_product').css('display', 'block');
+
+                $('#productimize_customize_cancel_button').css("display", "none");
+                $('#pz_data').css("display", "block")
+                $('#pz-display-price').css("visibility", "visible");
+
+            });
+
+            $(document).on("click", ".frameli li, .linerli li, .topmatli li, .bottommatli li", function(e) {
+                console.log("frame lis is calling")
+                console.log($(this).attr('data-sku'), $(this).attr('data-width'))
+                const data = {
+                    'sku':$(this).attr('data-sku'),
+                    'width': $(this).attr('data-width')
+                }
+                let arrayy = {"frameli":"frames","topmatli":"topMat","bottommatli":"bottomMat","linerli":"liner"};
+                let parentClass = $(this).parents('.pz-design-item-list').attr('dataFrom');
+                console.log(parentClass)
+                console.log(arrayy[parentClass])
+                console.log(arrayy[parentClass[parentClass]])
+                console.log($(this).attr('data-sku'))
+                console.log($(this).find('.pz-design-item-name:first').text())
+                console.log($(this).attr('data-width'))
+                setPZSelectedOptions({'name': arrayy[parentClass], 'sku' : $(this).attr('data-sku'), 'displayName': $(this).find('.pz-design-item-name:first').text(),'width':$(this).attr('data-width')});
+                //callFrameData (data);
+
+            });
+
+
+            const renderSelectList = () => {
+
+            }
+            const renderSlider = () => {
+
+            }
+            const renderSearchBox = () => {
+
+            }
+
+
+        });
+
+
+</script>
