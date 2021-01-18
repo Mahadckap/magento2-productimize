@@ -7,10 +7,10 @@
             <referenceBlock name="product.info.description" remove="true"/>
        <!-- <referenceBlock name="product.info.price" remove="true"/>-->
          <!-- htmlClass="productimize-info-main" -->
-            <block class="Magento\Catalog\Block\Product\View" name="productimize.view.buttons" as="productimize.view.buttons" template="DCKAP_Productimize::productimize-page.phtml" before="product.info.addtocart">
-                <block class="Magento\Catalog\Block\Product\View" name="productimize.view.customize.button" as="productimize.view.customize.button" template="DCKAP_Productimize::productimize-customize-button.phtml" />
+            <block class="Magento\Catalog\Block\Product\View" name="productimize.view.buttons" as="productimize.view.buttons" template="Mahadckap_Productimize::productimize-page.phtml" before="product.info.addtocart">
+                <block class="Magento\Catalog\Block\Product\View" name="productimize.view.customize.button" as="productimize.view.customize.button" template="Mahadckap_Productimize::productimize-customize-button.phtml" />
             </block>
-            <block class="DCKAP\Productimize\Block\Productimizehome" name="productimize.sample_images" as="productimize.sample_images" template="DCKAP_Productimize::sample-images.phtml" before="product.info.addtocart"/>
+            <block class="Mahadckap\Productimize\Block\Productimizehome" name="productimize.sample_images" as="productimize.sample_images" template="Mahadckap_Productimize::sample-images.phtml" before="product.info.addtocart"/>
         </referenceContainer>
 
         <move element="product.info.addto" destination="product.info.main" after="product.info.addtocart"/>
