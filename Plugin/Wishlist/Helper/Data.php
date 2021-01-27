@@ -1,6 +1,6 @@
 <?php
 
-namespace DCKAP\Productimize\Plugin\Wishlist\Helper;
+namespace Mahadckap\Productimize\Plugin\Wishlist\Helper;
 
 use Magento\Framework\UrlInterface;
 
