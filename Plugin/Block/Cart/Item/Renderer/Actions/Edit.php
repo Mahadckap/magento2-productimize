@@ -1,6 +1,6 @@
 <?php
 
-namespace DCKAP\Productimize\Plugin\Block\Cart\Item\Renderer\Actions;
+namespace Mahadckap\Productimize\Plugin\Block\Cart\Item\Renderer\Actions;
 
 class Edit
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace DCKAP\Productimize\Plugin\Wishlist\Block;
+namespace Mahadckap\Productimize\Plugin\Wishlist\Block;
 
 class AbstractBlock
 {
