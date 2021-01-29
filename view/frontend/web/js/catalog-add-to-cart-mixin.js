@@ -18,27 +18,29 @@ define([
                 var saveCanvasUrl = url.build('productimize/index/savecanvas');
                 //var canvas = document.getElementById("pz-canvas");
                 //var dataUrl = canvas.toDataURL("image/jpeg");
-                var dataUrl = getArtwork('jpeg');
-                $.ajax({
-                    showLoader: true,
-                    url: saveCanvasUrl,
-                    data: {
-                        dataUrl: dataUrl
-                    },
-                    type: "POST",
-                    success: function (data) {
-                        console.log("submit 1");
-                        console.log(data);
-                        self.assignPZCartProperties(data);
-                        setTimeout(function () {
-                            self.ajaxSubmit(form);
-                        },3000)
-                        
-                        console.log("submit last");
-                    }
-                });
+                if (typeof getArtwork == 'function') {
+                    var dataUrl = getArtwork('jpeg');
+                    $.ajax({
+                        showLoader: true,
+                        url: saveCanvasUrl,
+                        data: {
+                            dataUrl: dataUrl
+                        },
+                        type: "POST",
+                        success: function (data) {
+                            console.log("submit 1");
+                            console.log(data);
+                            self.assignPZCartProperties(data);
+                            setTimeout(function () {
+                                self.ajaxSubmit(form);
+                            }, 3000)
+
+                            console.log("submit last");
+                        }
+                    });
+                }
             },
-            assignPZCartProperties: function (imageUrl) {
+            assignPZCartProperties: function (imageData) {
                 var encodedPZCartProperties = document.getElementById('pz_cart_properties').value;
 
                 var pzCartProperties = null;
@@ -47,20 +49,37 @@ define([
                     pzCartProperties = JSON.parse(encodedPZCartProperties)
                 }
 
-                var outputData = {};
+                var outputData = {}, pzCartOutputData = {};
                 var loopInc = 0;
+
 
                 for (const property in pzSelectedOptions) {
                     loopInc++;
                     const data = pzSelectedOptions[property];
                     outputData[property] = data.sku;
+                    //outputData[property] += (data.sku) ? ' ';
 
-                    if (imageUrl && loopInc == 1) {
-                        outputData['CustomImage'] = imageUrl;
+                    if (imageData.imageUrl && loopInc == 1) {
+                        outputData['CustomImage'] = imageData.imageUrl;
                     }
                 }
+                var glassDimention = getGlassDimention(null);
                 if (loopInc == Object.keys(pzSelectedOptions).length) {
-                    document.getElementById('pz_cart_properties').value = JSON.stringify(outputData);
+
+                    pzCartOutputData['Medium'] = (jQuery('.medium-select-elem')) ? jQuery('.medium-select-elem').val() : 'No Medium'
+                    pzCartOutputData['Treatment'] = (jQuery('.treatment-select-elem')) ? jQuery('.treatment-select-elem').val() : 'No Treatment'
+                    pzCartOutputData['Size'] = glassDimention[0] ? glassDimention[0] : 100 + ' X ' + (glassDimention[1]) ? glassDimention[1] : 100;
+                    pzCartOutputData['Frame'] = (outputData['frame']) ? outputData['frame'] : 'No Frame';
+                    pzCartOutputData['Top Mat'] = (outputData['topMat']) ? outputData['topMat'] : 'No Top Mat';
+                    pzCartOutputData['Bottom Mat'] = (outputData['bottomMat']) ? outputData['bottomMat'] : 'No Bottom Mat';
+                    pzCartOutputData['Artwork Color'] = (jQuery('#pz-text')) ? jQuery('#pz-text').val() : 'No Artwork Color';
+                    pzCartOutputData['Sidemark'] = (jQuery('.pz-textarea')) ? jQuery('.pz-textarea').val() : 'No Sidemark';
+
+
+                    if (imageData.imageUrl) {
+                        pzCartOutputData['CustomImage'] = imageData.imageUrl;
+                    }
+                    document.getElementById('pz_cart_properties').value = JSON.stringify(pzCartOutputData);
                 }
             }
         });
@@ -68,3 +87,4 @@ define([
         return $.mage.catalogAddToCart;
     }
 });
+
