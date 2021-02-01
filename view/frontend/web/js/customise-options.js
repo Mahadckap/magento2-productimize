@@ -54,6 +54,7 @@ define([
             var defaultConfigJson = JSON.parse(default_config);
             var mediaDefault = defaultConfigJson.medium_default_sku;
             var product_level = $(this.options.productLevel).val();
+            product_level = (product_level) ? product_level : 0;
             var treatDefault = defaultConfigJson.treatment_default_sku;
             var matsLiner = ['topmat', 'bottommat', 'liner'];
             var configlevel4 = ['frame', 'liner'];
@@ -202,7 +203,7 @@ define([
                 }
             });
             $('body').on("change", ".pz-medium .medium-select-elem", function () {
-
+               
                 $(self.options.sizeLabelDiv).html(" ");
                 $(self.options.preSizeLabelDiv).html("");
                 $(self.options.sizeOuterLabelDiv).html("");
@@ -224,8 +225,10 @@ define([
                 var treathtml = '<option value="" class="option">Select Treatment</option>';
                 var returnedData = $(self.options.apiReturnData).val();
                 var customizer_api_data = JSON.parse(returnedData);
-                $.each(customizer_api_data, function (key, data) {
-                    if (key == selectedMedia) {
+                //$.each(customizer_api_data, function (key, data) {
+                    //if (key == selectedMedia) {
+                if (customizer_api_data && Object.keys(customizer_api_data).length > 0 && selectedMedia in customizer_api_data) {
+                        var data = customizer_api_data[selectedMedia];
                         $.each(data['treatment'], function (trkey, trdata) {
                             if (trdata['display_to_customer']) {
                                 treatArr.push(trkey);
@@ -237,9 +240,9 @@ define([
                         //     var html = '<option selected data-sku="'+treatDefault+'" value="'+treatDefault+'" class="option">'+treatDefault+'</option>';
                         //     $('.pz-medium select.treatment-select-elem').append(html);
                         // }
-                        return true;
+                        ///return true;
                     }
-                });
+                //});
                 $('.pz_treatment select.treatment-select-elem').html(treathtml);
                 if (product_level != 1) {
                     if ($.inArray(treatDefault, treatArr) !== -1) {
@@ -1056,11 +1059,12 @@ define([
             console.log(selectedTreatment);
             //if(returnedData[selectedMedia]['treatment'][selectedTreatment].hasOwnProperty('frames')) {
             $.each(returnedData[selectedMedia]['treatment'][selectedTreatment]['frames'], function (framekey, framedata) {
-                frameTypesAllowed.push(framekey);
+                //frameTypesAllowed.push(framekey);
+                frameTypesAllowed.push(framedata);
             });
             //}
 
-            frameTypesAllowed = ["Standard"];
+            //frameTypesAllowed = ["Standard"];
 
             var selectedFrameText = '';
             var mediaframehtml = '<li class="pz-design-item" data-tab="" data-color="" data-sku="No Frame" data-width="" data-color-frame="" data-type="">' +
@@ -1086,7 +1090,7 @@ define([
                     var glassSize = glassDimention[0] * glassDimention[1];
                     //framedata['m_max_outer_size'] >= glassSize
                     console.log(framedata['m_frame_rabbet_depth'], " ",  minRabbetDepth,  " ", framedata['m_max_outer_size'],  " ", glassSize);
-                    if (parseFloat(framedata['m_frame_rabbet_depth']) >= minRabbetDepth && framedata['m_max_outer_size'] >= glassSize) {
+                    if (parseFloat(framedata['m_frame_rabbet_depth']) >= minRabbetDepth && (parseFloat(framedata['m_max_outer_size']) >= parseFloat(glassSize) / 144) ) {
                         if ($.inArray(framedata['m_frame_width'], widthdata) == -1) {
                             console.log(framedata)
                             widthdata.push(framedata['m_frame_width']);
@@ -1133,6 +1137,8 @@ define([
                 }
             });
 
+            $('.frameli').html(mediaframehtml);
+
             $.each(frameColorFilter, function (frameColorFilterkey, frameColorFilterdata) {
                 // console.log(framesizefilter[frameColorFilterkey])
                 // console.log(frametypefilter[frameColorFilterkey])
@@ -1152,7 +1158,7 @@ define([
 
             $('.pz-frame .colorlist').html(colorlist);
             console.log($('.frameli').find('li').length);
-            $('.frameli').html(mediaframehtml);
+
             console.log($('.frameli').find('li').length);
             //$('.frameli').owlCarousel('destroy');
 
@@ -1160,8 +1166,7 @@ define([
             $('.pz-optionwidthsearch ul').html(widthLi);
             $('.pz-frame').find('.pz-optiontypesearch ul').html(typeLi);
 
-
-            /*if($('.frameli').find('li').length > 0) {
+            if($('.frameli').find('li').length > 0) {
                 $('.frameli').owlCarousel('destroy');
                 $('.frameli').owlCarousel({
                     loop: false,
@@ -1183,7 +1188,7 @@ define([
                         }
                     }
                 });
-        }*/
+        }
             this.checkLinerCondition();
 
         },
@@ -1353,7 +1358,7 @@ define([
             let typearray = [];
 
             var requiresMat = (matTypeOption == 'topmat') ?  requiresTopMat : requiresBotMat;
-            if(parseInt(requiresTopMat) !=0 || parseInt(requiresBotMat) !=0) {
+            if( (matTypeOption == "topMat" && parseInt(requiresTopMat) !=0) || (matTypeOption != "topMat" && parseInt(requiresBotMat) !=0)) {
                 mediaframehtml = '';
                 $.each(returnedFrameData, function (framekey, framedata) {
                     console.log(framedata);
