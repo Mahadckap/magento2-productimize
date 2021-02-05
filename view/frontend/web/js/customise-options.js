@@ -45,18 +45,20 @@ define([
                 "size": "Size",
                 "media": "Media",
                 "treatment": "Treatment"
-            }
+            },
+            cartProperties:{},
+            pageEdit : 1,
+            tabloops : 0
         },
         _create: function () {
-            console.log("test");
             var self = this;
             var default_config = $(this.options.defaultConfig).val();
             var defaultConfigJson = JSON.parse(default_config);
             var mediaDefault = defaultConfigJson.medium_default_sku;
             var product_level = $(this.options.productLevel).val();
-            product_level = (product_level) ? product_level : 1;
+            product_level = (product_level) ? product_level : 0;
             var treatDefault = defaultConfigJson.treatment_default_sku;
-            var matsLiner = ['topmat', 'bottommat', 'liner'];
+            var matsLiner = ['frame','topmat', 'bottommat', 'liner'];
             var configlevel4 = ['frame', 'liner'];
 
             $('body').on('change', '.pz-customizer-section .pz-custom-content-wrapper .medium-option .treatment-select-elem', self.customiseSizeOption.bind(this));
@@ -70,9 +72,7 @@ define([
                     $(".pz-custom-items").removeClass("open");
                     $(self.options.sizeOptionDiv).parent().addClass('open');*/
 
-
                     //title append
-                    console.log('sizecheck' + self.options.preSizeLabelDiv);
                     if ($(self.options.preSizeLabelDiv).html() == "") {
                         if ($(self.options.sizeSlider).text()) {
                             var str = $(self.options.sizeSlider).text();
@@ -88,8 +88,6 @@ define([
                                 self.callFrameRightContent($(this).text());
                                 self.checkTopMatCondition();
                                 self.checkBottomMatCondition();
-                                console.log($(this).text());
-                                console.log('triggered frame update');
                                 self.resetNextTabs('size');
                             }
                         });
@@ -101,8 +99,11 @@ define([
                 //presize title append
                 if ($(self.options.preSizeLabelDiv).html() == "") {
                     if ($(self.options.sizeSlider).text()) {
-                        var str = $(self.options.sizeSlider).text();
-                        self.sizeTitleAppend(str);
+
+                        //this.options.sizeOptionDiv
+                        $(self.options.sizeOptionDiv).trigger('click');
+                        // var str = $(self.options.sizeSlider).text();
+                        // self.sizeTitleAppend(str);
                     }
                 }
 
@@ -123,7 +124,6 @@ define([
 
             $('body').on("click", ".frameli li", function (e) {
                 setTimeout(function () {
-                    console.log("frameli click");
                     self.checkLinerCondition();
                 }, 3000);
             });
@@ -177,7 +177,6 @@ define([
                 self.tabGreenCheck(presentThis, 1);
                 var tab = $(this).parents('.pz-custom-items').next().find('.pz-custom-item-header').attr('data-tab');
                 if ($.inArray(tab, matsLiner) !== -1) {
-                    console.log('inside condition liner');
                     if ($('.' + tab + 'li li').length == 1 && $('.' + tab + 'li li').hasClass('zeroth-value')) {
                         $('.' + tab + 'li li.zeroth-value').trigger('click');
                     }
@@ -193,7 +192,6 @@ define([
                 self.tabGreenCheck(presentThis, 2);
                 // select empty values for mat
                 if ($.inArray(tab, matsLiner) !== -1) {
-                    console.log('inside condition liner');
                     if ($('.' + tab + 'li li').length == 1 && $('.' + tab + 'li li').hasClass('zeroth-value')) {
                         $('.' + tab + 'li li.zeroth-value').trigger('click');
                     }
@@ -202,8 +200,14 @@ define([
                     $('.' + tab + 'li li.defaultOption').trigger('click');
                 }
             });
-            $('body').on("change", ".pz-medium .medium-select-elem", function () {
-
+            $('body').on("change", ".pz-medium .medium-select-elem", function (e) {
+                if (window.location.href.indexOf("edit") > -1) {
+                    self.vars.pageEdit = 0;
+                    self.vars.tabloops++;
+                }
+                if(self.vars.pageEdit == 0 && self.vars.tabloops <= 1)    {
+                    self.editgreentick();
+                }
                 $(self.options.sizeLabelDiv).html(" ");
                 $(self.options.preSizeLabelDiv).html("");
                 $(self.options.sizeOuterLabelDiv).html("");
@@ -216,35 +220,45 @@ define([
                 var selectedTreatment = $('.pz_treatment select.treatment-select-elem').find(':selected').val();
                 if (selectedMedia != '') {
                     self.vars.customCartProperty[self.vars.tabLabels['media']] = selectedText;
+                    delete self.vars.customCartProperty[self.vars.tabLabels['treatment']];
                     $('.medium-treat .pz-item-selected-medtrt').html(selectedText);
                 } else {
                     $('.medium-treat .pz-item-selected-medtrt').html('');
                     delete self.vars.customCartProperty[self.vars.tabLabels['media']];
+                    delete self.vars.customCartProperty[self.vars.tabLabels['treatment']];
                 }
                 var treatArr = [];
                 var treathtml = '<option value="" class="option">Select Treatment</option>';
                 var returnedData = $(self.options.apiReturnData).val();
                 var customizer_api_data = JSON.parse(returnedData);
                 //$.each(customizer_api_data, function (key, data) {
-                //if (key == selectedMedia) {
+                    //if (key == selectedMedia) {
                 if (customizer_api_data && Object.keys(customizer_api_data).length > 0 && selectedMedia in customizer_api_data) {
-                    var data = customizer_api_data[selectedMedia];
-                    $.each(data['treatment'], function (trkey, trdata) {
-                        if (trdata['display_to_customer']) {
-                            treatArr.push(trkey);
-                            treathtml += '<option data-sku="' + trkey + '" value="' + trkey + '" class="option">' + trdata['display_name'] + '</option>';
-                        }
-                    });
-                    // else if(treatDefault != 'undefined') {
-                    //     console.log('inside elseif');
-                    //     var html = '<option selected data-sku="'+treatDefault+'" value="'+treatDefault+'" class="option">'+treatDefault+'</option>';
-                    //     $('.pz-medium select.treatment-select-elem').append(html);
-                    // }
-                    ///return true;
-                }
+                        var data = customizer_api_data[selectedMedia];
+                        $.each(data['treatment'], function (trkey, trdata) {
+                            if (trdata['display_to_customer']) {
+                                treatArr.push(trkey);
+                                treathtml += '<option data-sku="' + trkey + '" value="' + trkey + '" class="option">' + trdata['display_name'] + '</option>';
+                            }
+                        });
+                        // else if(treatDefault != 'undefined') {
+                        //     var html = '<option selected data-sku="'+treatDefault+'" value="'+treatDefault+'" class="option">'+treatDefault+'</option>';
+                        //     $('.pz-medium select.treatment-select-elem').append(html);
+                        // }
+                        ///return true;
+                    }
                 //});
                 $('.pz_treatment select.treatment-select-elem').html(treathtml);
-                console.log("product_level ", product_level)
+                if((self.vars.pageEdit == 0) && (self.vars.cartProperties['treatment']!='') && self.vars.tabloops <= 1)   {
+                    $(".treatment-select-elem option[value='"+self.vars.cartProperties['treatment']+"']").prop("selected", true)
+                    $('.pz_treatment select.treatment-select-elem').selectric('refresh');
+                    self.tabGreenCheck($('.pz_treatment select.treatment-select-elem'),1)
+                    $('.pz_treatment select.treatment-select-elem').val(self.vars.cartProperties['treatment']).trigger('change');
+                    self.vars.tabloops++;
+                   
+                }
+
+
                 if (product_level != 1) {
                     if ($.inArray(treatDefault, treatArr) !== -1) {
                         $('.pz_treatment select.treatment-select-elem').val(treatDefault).trigger('change');
@@ -254,7 +268,9 @@ define([
                 // if($.inArray(selectedTreatment, treatArr) !== -1) {
                 //     $('.pz_treatment select.treatment-select-elem').val(selectedTreatment).trigger('change');
                 // }
-                self.resetNextTabs('medtrt');
+                if(self.vars.pageEdit == 1) {
+                    self.resetNextTabs('medtrt');
+                }
                 $('.pz_treatment select.treatment-select-elem').selectric('refresh');
             });
             $('body').on("change", ".pz_treatment .treatment-select-elem", function () {
@@ -275,12 +291,12 @@ define([
                 }
 
                 $('.medium-treat .pz-item-selected-medtrt').html(finalText);
-                self.resetNextTabs('medtrt');
+                if(self.vars.pageEdit == 1) {
+                    self.resetNextTabs('medtrt');
+                }
                 //setPZSelectedOptions({'name': 'treatment', 'sku' : selectedVal, 'displayName': selectedText});
             });
             $('body').on("click", ".frameli li, .linerli li, .topmatli li, .bottommatli li", function (e) {
-                console.log("frame lis is calling")
-                console.log($(this).attr('data-sku'), $(this).attr('data-width'))
                 const data = {
                     'sku': $(this).attr('data-sku'),
                     'width': $(this).attr('data-width')
@@ -288,7 +304,6 @@ define([
                 let arrayy = {"frameli": "frame", "topmatli": "topMat", "bottommatli": "bottomMat", "linerli": "liner"};
                 let parentClass = $(this).parents('.pz-design-item-list').attr('dataFrom');
                 var nextTab = $(this).parents('.pz-custom-items').children('.pz-custom-item-header').attr('data-nexttab');
-                console.log(nextTab);
                 var clickedTab = arrayy[parentClass].toLowerCase();
                 self.vars.customCartProperty[self.vars.tabLabels[parentClass]] = $(this).find('.pz-design-item-name:first').text();
                 // disable click event if product level is 4
@@ -327,7 +342,6 @@ define([
         tabGreenCheck: function (presentThis, clickfrom) {
             let customCartProperty = this.vars.customCartProperty;
             let tabLabels = this.vars.tabLabels;
-            console.log(customCartProperty)
             presentThis = presentThis;
             let parentItem = presentThis.parents('.pz-custom-items')
             let nextThis = parentItem.next();
@@ -337,20 +351,50 @@ define([
                     parentItem = parentItem.prev();
                 }
             }
-            let datacheck = parentItem.find('.nextcontent').attr('dataCheck').split(',');
             let tabopn = 1;
-            $.each(datacheck, function (ind, value) {
-                if (!customCartProperty[tabLabels[value]]) {
-                    tabopn = 0
+            var upcoming = '';
+            let currentTab = parentItem.find('.pz-custom-item-header').attr('data-tab');
+            let openTab = '';
+            $.each(this.vars.customizerTabs, function (tab, value) {
+                if (value == currentTab) {
+                    upcoming = tab;
                 }
-            })
-            let valueerror = parentItem.find('.pz-item-title-text').text();
+            });
+            $.each(this.vars.customizerTabs, function (tab, value) {
+                if ($('[data-tab=' + value + ']').parent().length > 0 && upcoming != '' && tab <= upcoming) {
+                    console.log($('[data-tab=' + value + ']').parent())
+                    //if($('[data-tab=' + value + ']').parent().length > 0)   {
+                        let datacheck = $('[data-tab=' + value + ']').parent().find('.nextcontent').attr('dataCheck').split(',');
+                        console.log(datacheck)
+                        $.each(datacheck, function (ind, value1) {
+                            if (!customCartProperty[tabLabels[value1]]) {
+                                tabopn = 0;
+                                openTab = value;     
+                                $('[data-tab=' + value + ']').parent().find('.pz-item-step-number').css('display', 'flex');
+                                $('[data-tab=' + value + ']').parent().find('.pz-tick.pz-tick-success').css('display', 'none');                       
+                            }   else {
+                                $('[data-tab=' + value + ']').parent().find('.pz-item-step-number').css('display', 'none');
+                                $('[data-tab=' + value + ']').parent().find('.pz-tick.pz-tick-success').css('display', 'flex');
+                            }
+                        })
+                    //}
+                }
+                if(openTab != '')    {
+                    return false;
+                }
+            });
+            console.log(openTab)
+            let valueerror1 = $('.pz-custom-items.open');
+            if(openTab!='') {
+                valueerror1 = $('[data-tab=' + openTab + ']').parent();
+            }
+            let valueerror = valueerror1.find('.pz-item-title-text').text();
             if (valueerror.toLowerCase().includes('medium')) {
                 valueerror = 'Media and Treatment'
             }
             if (tabopn == 0) {
                 if ($('.customred').length == 0) {
-                    parentItem.find('.nextcontent').before('<div class="customred">*Please select ' + valueerror + ' to continue</div>')
+                    valueerror1.find('.nextcontent').before('<div class="customred">*Please select ' + valueerror + ' to continue</div>')
                     $('.customred').fadeOut(5000, function () {
                         $(this).remove();
                     });
@@ -366,20 +410,64 @@ define([
                 parentItem.find('.pz-tick.pz-tick-success').css('display', 'flex');
             }
         },
+        editgreentick: function () {
+            let cartProp = $('#pz_cart_properties').val();
+            if(cartProp!='')    {
+                this.vars.cartProperties = JSON.parse(cartProp);
+                if(this.vars.cartProperties['treatment'])   {
+                this.vars.customCartProperty[this.vars.tabLabels['treatment']] = this.vars.cartProperties['treatment'];
+                $('.pz-custom-item-header[data-tab="medtrt"] .pz-item-header .pz-item-step-number').css('display', 'none');
+                $('.pz-custom-item-header[data-tab="medtrt"] .pz-tick.pz-tick-success').css('display', 'flex');
+                }
+                if(this.vars.cartProperties['artwork color'] && this.vars.cartProperties['artwork color']!='')  {
+                    $('.showartworktext').prop('checked', true);
+                    $('.pz-text-control-wrapper').css('display','block');
+                    $('.pz-text-control-wrapper').find('textarea').text(this.vars.cartProperties['artwork color'])
+                    this.vars.customCartProperty['artwork color'] = this.vars.cartProperties['artwork color'];
+                }
+                if(this.vars.cartProperties['sidemark'] && this.vars.cartProperties['sidemark']!='')  {
+                    $('.showsidemarktext').prop('checked', true);
+                    $('.pz-divtext').css('display','block');
+                    $('.pz-divtext').find('textarea').text(this.vars.cartProperties['sidemark'])
+                    this.vars.customCartProperty['sidemark'] = this.vars.cartProperties['sidemark'];
+                }
+                
+                if(this.vars.cartProperties['frame'])   {
+                    this.vars.customCartProperty[this.vars.tabLabels['frameli']] = this.vars.cartProperties['frame'];
+                    $('.pz-custom-item-header[data-tab="frame"] .pz-item-header .pz-item-step-number').css('display', 'none');
+                    $('.pz-custom-item-header[data-tab="frame"] .pz-tick.pz-tick-success').css('display', 'flex');
+                }
+                if(this.vars.cartProperties['bottom mat'])   {
+                    this.vars.customCartProperty[this.vars.tabLabels['bottommatli']] = this.vars.cartProperties['bottom mat'];
+                    $('.pz-custom-item-header[data-tab="bottommat"] .pz-item-header .pz-item-step-number').css('display', 'none');
+                    $('.pz-custom-item-header[data-tab="bottommat"] .pz-tick.pz-tick-success').css('display', 'flex');
+                }
+                if(this.vars.cartProperties['top mat'])   {
+                    this.vars.customCartProperty[this.vars.tabLabels['topmatli']] = this.vars.cartProperties['top mat'];
+                    $('.pz-custom-item-header[data-tab="topmat"] .pz-item-header .pz-item-step-number').css('display', 'none');
+                    $('.pz-custom-item-header[data-tab="topmat"] .pz-tick.pz-tick-success').css('display', 'flex');
+                }
+                if(this.vars.cartProperties['liner'])   {
+                    this.vars.customCartProperty[this.vars.tabLabels['linerli']] = this.vars.cartProperties['liner'];
+                    $('.pz-custom-item-header[data-tab="liner"] .pz-item-header .pz-item-step-number').css('display', 'none');
+                    $('.pz-custom-item-header[data-tab="liner"] .pz-tick.pz-tick-success').css('display', 'flex');
+                }
+
+            }
+        },
+
         sizeTitleAppend: function (str) {
             var res = str.replace("×", "″w × ");
             res = ' / ' + res + "″h";
 
             $(this.options.sizeLabelDiv).html("");
             $(this.options.sizeLabelDiv).html("Pre-Frame Size ");
-
             $(this.options.preSizeLabelDiv).html("");
             $(this.options.preSizeLabelDiv).html(res);
         },
 
 
         sizeOuterDimensionTitleAppend: function (glassDimension) {
-            console.log("sizeOuterDimensionTitleAppend");
             var width, height, res;
 
             width = glassDimension[0];
@@ -415,7 +503,6 @@ define([
             selectedTreatmentOption = $.trim($(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val());
 
             if (selectedMediumOption && selectedTreatmentOption && defaultMedium != selectedMediumOption || defaultTreatment != selectedTreatmentOption) {
-                console.log("hasChangedMediaTreatment");
                 hasChanged = 1;
             }
             return hasChanged;
@@ -438,14 +525,12 @@ define([
 
             if (selectedSizeOption && selectedFrameOption && defaultSize != selectedSizeOption || dafaultFrame != selectedFrameOption) {
                 hasChangedSF = 1;
-                console.log("hasChangedSizeFrame");
             }
 
             return hasChangedSF;
         },
 
         customiseSizeOption: function () {
-            console.log("size onclick");
             var self = this, selectedMediumOption, selectedTreatmentOption, configLevel;
             configLevel = $(this.options.productLevel).val();
             selectedMediumOption = $(self.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
@@ -507,16 +592,50 @@ define([
                         }
                     },
                     complete: function (xhr, status) {
-                        console.log("Size ajax completed now")
-
                         if ($(".ui-slider-range").length > 0) {
                             $('.rangeleft').html('<span>' + sizeArray[0] + '</span>(Min)');
+                            $('.rangeright').html('<span>' + sizeArray[sizeArray.length - 1] + '</span>(Max)');
                             var control = $('#slider');
                             var output = control.next('output');
-                            self.vars.customCartProperty[self.vars.tabLabels['size']] = sizeArray[0];
-                            output.css('left', '0%').css('position', 'absolute').text(sizeArray[0]);
-                            $('.rangeright').html('<span>' + sizeArray[sizeArray.length - 1] + '</span>(Max)');
-                            $('.ui-slider-handle').css('left', '0%')
+
+                            if(self.vars.pageEdit == 0 && self.vars.cartProperties['size'])   {
+                                // let sizeVal = self.vars.cartProperties['size'].replace('X','x×');
+                                // console.log(sizeArray)
+                                // console.log(sizeVal , '16×21')
+                                // if(parseInt(sizeVal) == '16×21')  {
+                                //     console.log('samemee')
+                                // }
+                                // console.log(sizeArray.indexOf('16×21'))        
+                                // var found = false;
+                                // for (var i = 0; i < sizeArray.length && !found; i++) {
+                                //     console.log(sizeArray[i].trim().length ,sizeVal.trim().length)
+                                // if (sizeArray[i].includes(sizeVal)) {
+                                //     found = true;
+                                //     console.log('foffofuntt')
+                                //     break;
+                                // }
+                                // }
+                                
+                                // const myName = sizeArray.filter(name => name.includes(sizeVal));
+                                // console.log(myName);
+                                let sizeVal = self.vars.cartProperties['size']
+                                console.log(sizeVal)
+                                console.log(sizeArray.indexOf(sizeVal))
+                                let leftPosi = (100/sizeArray.length)*sizeArray.indexOf(sizeVal);
+                                self.vars.customCartProperty[self.vars.tabLabels['size']] = sizeVal;
+                                output.css('left', leftPosi+'%').css('position', 'absolute').text(sizeVal);
+                                $('.ui-slider-handle').css('left', leftPosi+'%')
+                                var str = $('output[name="rangeVal"]').text();
+                                self.sizeTitleAppend(str);
+                                self.vars.tabloops++;
+                            }   else {
+                                self.vars.customCartProperty[self.vars.tabLabels['size']] = sizeArray[0];
+                                output.css('left', '0%').css('position', 'absolute').text(sizeArray[0]);
+                                $('.ui-slider-handle').css('left', '0%')
+                            }
+                            
+                            
+                            
                         }
 
 
@@ -525,7 +644,6 @@ define([
                     },
                     error: function (error) {
                         self.options.isAjaxSuccess = false;
-                        console.log(error);
                     }
                 });
             }
@@ -533,65 +651,97 @@ define([
 
         checkTopMatCondition: function () {
             var configLevel, isDefaultTopMat = 0, requireTopMatForTreatment, selectedMediumOption,
-                selectedTreatmentOption, returnedData, defaultConfig, isDefaultMat, isDefaultBottomMat = 0,
-                glassDimention, artworkData, width, height, isDefaultTopMatSku, isDefaultBottomMatSku;
+                selectedTreatmentOption, returnedData, defaultConfig;
 
             configLevel = $('#pz_platform_product_level').val();
+            selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
+            selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+
             returnedData = JSON.parse($(this.options.apiReturnData).val());
             selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
             selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
             requireTopMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_top_mat']);
 
             defaultConfig = JSON.parse($('#pz_magento_default_options').val());
-            artworkData = this.getArtworkData();
-            glassDimention = getGlassDimention(artworkData);
-            width = glassDimention[0];
-            height = glassDimention[1];
             $.each(defaultConfig, function (key, data) {
                 if (key == 'top_mat_default_sku' && data) {
                     isDefaultTopMat = 1;
-                    isDefaultTopMatSku = data;
                     return false;
                 }
             });
 
-            $.each(defaultConfig, function (key, data) {
-                if (key == 'bottom_mat_default_sku' && data) {
-                    isDefaultBottomMat = 1;
-                    isDefaultBottomMatSku = data;
-                    return false;
+            if (configLevel <= 4) {
+                if (selectedMediumOption && selectedTreatmentOption) {
+                    if (this.hasChangedMediaTreatment()) {
+                        if (requireTopMatForTreatment) {
+                            this.getFirstMatCondition('topmat');
+                        } else {
+                            //disable topmat
+                            this.callMatRightContent([], 'topmat');
+                        }
+                    } else {
+                        if (isDefaultTopMat) {
+                            this.getFirstMatCondition('topmat');
+                        } else {
+                            //disable topmat
+                            this.callMatRightContent([], 'topmat');
+                        }
+                    }
+                } else {
+                    //disable topmat
+                    this.callMatRightContent([], 'topmat');
                 }
-            });
-
-
-            var payload = {
-                'config_level': configLevel,
-                'selected_medium': selectedMediumOption,
-                'selected_treatment': selectedTreatmentOption,
-                'require_topmat_for_treatment': requireTopMatForTreatment,
-                'has_changed_medium_treatment': this.hasChangedMediaTreatment(),
-                'has_changed_size_frame': this.hasChangedSizeFrame(),
-                'is_default_topmat': isDefaultTopMat,
-                'is_default_bottommat': isDefaultBottomMat,
-                'is_default_bottommat_sku': isDefaultBottomMatSku,
-                'is_default_topmat_sku': isDefaultTopMatSku,
-                'width': width,
-                'height': height
-            };
-            this.getAjaxDetails(payload, 'topmat');
-
+            }
         },
 
         checkBottomMatCondition: function () {
-            var configLevel, isDefaultTopMat = 0, requireBottomMatForTreatment, selectedMediumOption,
-                selectedTreatmentOption, returnedData, defaultConfig, isDefaultMat, isDefaultBottomMat = 0,
-                glassDimention, artworkData, width, height, isDefaultTopMatSku, isDefaultBottomMatSku;
+            var configLevel, isDefaultBottomMat = 0, requireBottomMatForTreatment, selectedMediumOption,
+                selectedTreatmentOption, returnedData, defaultConfig;
 
             configLevel = $('#pz_platform_product_level').val();
+            selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
+            selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+
             returnedData = JSON.parse($(this.options.apiReturnData).val());
             selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
             selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-            requireBottomMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_top_mat']);
+            requireBottomMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_bottom_mat']);
+
+            defaultConfig = JSON.parse($('#pz_magento_default_options').val());
+            $.each(defaultConfig, function (key, data) {
+                if (key == 'bottom_mat_default_sku' && data) {
+                    isDefaultBottomMat = 1;
+                    return false;
+                }
+            });
+
+            if (configLevel <= 4) {
+                if (selectedMediumOption && selectedTreatmentOption) {
+                    if (this.hasChangedMediaTreatment()) {
+                        if (requireBottomMatForTreatment) {
+                            this.getFirstMatCondition('bottommat');
+                        } else {
+                            //disable bottommat
+                            this.callMatRightContent([], 'bottommat');
+                        }
+                    } else {
+                        if (isDefaultBottomMat) {
+                            this.getFirstMatCondition('bottommat');
+                        } else {
+                            //disable bottommat
+                            this.callMatRightContent([], 'bottommat');
+                        }
+                    }
+                } else {
+                    //disable bottommat
+                    this.callMatRightContent([], 'bottommat');
+                }
+            }
+        },
+
+        getFirstMatCondition: function (matTypeOption) {
+            var isDefaultMat, isDefaultTopMat = 0, isDefaultBottomMat = 0, glassDimention, artworkData, width, height,
+                defaultConfig;
 
             defaultConfig = JSON.parse($('#pz_magento_default_options').val());
             artworkData = this.getArtworkData();
@@ -601,7 +751,6 @@ define([
             $.each(defaultConfig, function (key, data) {
                 if (key == 'top_mat_default_sku' && data) {
                     isDefaultTopMat = 1;
-                    isDefaultTopMatSku = data;
                     return false;
                 }
             });
@@ -609,124 +758,55 @@ define([
             $.each(defaultConfig, function (key, data) {
                 if (key == 'bottom_mat_default_sku' && data) {
                     isDefaultBottomMat = 1;
-                    isDefaultBottomMatSku = data;
                     return false;
                 }
             });
 
 
-            var payload = {
-                'config_level': configLevel,
-                'selected_medium': selectedMediumOption,
-                'selected_treatment': selectedTreatmentOption,
-                'require_bottommat_for_treatment': requireBottomMatForTreatment,
-                'has_changed_medium_treatment': this.hasChangedMediaTreatment(),
-                'has_changed_size_frame': this.hasChangedSizeFrame(),
-                'is_default_topmat': isDefaultTopMat,
-                'is_default_bottommat': isDefaultBottomMat,
-                'is_default_topmat_sku': isDefaultTopMatSku,
-                'is_default_bottommat_sku': isDefaultBottomMatSku,
-                'width': width,
-                'height': height
-            };
-            this.getAjaxDetails(payload, 'bottommat');
+            isDefaultMat = (matTypeOption == 'topmat') ? isDefaultTopMat : isDefaultBottomMat;
 
-        },
-
-        checkLinerCondition: function () { console.log("liner");
-            var configLevel, isDefaultLiner = 0, requireLinerForTreatment, frameType, selectedMediumOption,
-                selectedTreatmentOption, selectedFrameSku, returnedFrameData, returnedData, defaultConfig,
-                frameRabbetDepth, minRabbetDepth, linerRabbetDepthCheck, defaultLinerSku = '';
-
-            configLevel = $('#pz_platform_product_level').val();
-            returnedFrameData = JSON.parse($(this.options.mageFrameData).val());
-            selectedFrameSku = $(this.options.frameOptionDiv).find('.pz-design-item.selectedFrame').attr('data-sku');
-            if (selectedFrameSku && returnedFrameData[selectedFrameSku]) {
-                frameType = returnedFrameData[selectedFrameSku]['m_frame_type'];
-                frameRabbetDepth = returnedFrameData[selectedFrameSku]['m_frame_rabbet_depth'];
-                frameType = frameType.toLowerCase();
+            if (width > 40 && height > 60) {
+                //display default mat with no op to select
+                this.getMatArray('default', matTypeOption);
+            } else {
+                if (this.hasChangedMediaTreatment() || this.hasChangedSizeFrame()) {
+                    this.getSecondMatCondition(matTypeOption);
+                } else {
+                    if (isDefaultMat) {
+                        //display default mat
+                        this.getMatArray('default', matTypeOption);
+                    } else {
+                        this.getSecondMatCondition(matTypeOption);
+                    }
+                }
             }
 
-            returnedData = JSON.parse($(this.options.apiReturnData).val());
-            selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
-            selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-            requireLinerForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_liner']);
-            minRabbetDepth = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['min_rabbet_depth']);
-            linerRabbetDepthCheck = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['liner_rabbet_depth_check']);
-
-            defaultConfig = JSON.parse($('#pz_magento_default_options').val());
-            $.each(defaultConfig, function (key, data) {
-                if (key == 'liner_default_sku' && data) {
-                    isDefaultLiner = 1;
-                    return false;
-                }
-            });
-
-            $.each(defaultConfig, function (key, data) {
-                if (key == 'liner_default_sku') {
-                    defaultLinerSku = data;
-                    return false;
-                }
-            });
-
-            var payload = {
-                'config_level': configLevel,
-                'selected_medium': selectedMediumOption,
-                'selected_treatment': selectedTreatmentOption,
-                'frame_type': frameType,
-                'selected_frame_sku': selectedFrameSku,
-                'require_liner_for_treatment': requireLinerForTreatment,
-                'has_changed_medium_treatment': this.hasChangedMediaTreatment(),
-                'has_changed_size_frame': this.hasChangedSizeFrame(),
-                'is_default_liner': isDefaultLiner,
-                'frame_rabbet_depth': frameRabbetDepth,
-                'min_rabbet_depth': minRabbetDepth,
-                'liner_rabbet_depth_check': linerRabbetDepthCheck,
-                'default_liner_sku': defaultLinerSku
-            };
-
-            this.getAjaxDetails(payload, 'liner');
         },
 
-        getAjaxDetails: function (payload, type){
-            console.log("ajaxli");
-            var self = this;
-            var responseArray = [];
-            $.ajax({
-                url: BASE_URL + this.options.customiseUrl,
-                type: "POST",
-                datatype: "json",
-                showLoader: true,
-                data: {payload, type:type},
-                success: function (response) {
-                    // responseArray = response['content'];
-                    console.log(response);
-                    if (type == 'liner') {  console.log("hu", type);
-                        self.callLinerRightContent(response['content']);
-                    } else if(type == 'topmat' || type == 'bottommat') { console.log("type", type);
-                        self.callMatRightContent(response['content'], type);
-                    }
-                },
-                error: function (err) {
-                    // console.log(err['info']);
-                }
-            });
+        getSecondMatCondition: function (matTypeOption) {
+            var glassDimention, width, height, artworkData;
+
+            artworkData = this.getArtworkData();
+            glassDimention = getGlassDimention(artworkData);
+            width = glassDimention[0];
+            height = glassDimention[1];
+
+            if (width > 32 && height > 40) {
+                this.getMatArray('oversized', matTypeOption);
+            } else {
+                this.getMatArray('standard', matTypeOption);
+            }
         },
 
         getArtworkData: function () {
-            console.log("artwork");
             var selectedSizeOption = $.trim($(this.options.sizeSlider).text()), artworkData = {}, selectedSize,
                 selectedFrameSku, returnedFrameData, frameWidth = 1, frameType = 'no-type';
-
-            console.log("size");
-            console.log(selectedSizeOption);
 
             if (selectedSizeOption.indexOf('x') != -1) {
                 selectedSize = selectedSizeOption.split('x');
             } else {
                 selectedSize = selectedSizeOption.split('\u00d7');
             }
-            // console.log(selectedSize);
             selectedFrameSku = $(this.options.frameOptionDiv).find('.pz-design-item.selectedFrame').attr('data-sku');
             returnedFrameData = JSON.parse($(this.options.mageFrameData).val());
 
@@ -734,10 +814,6 @@ define([
                 frameWidth = returnedFrameData[selectedFrameSku]['m_frame_width'];
                 frameType = returnedFrameData[selectedFrameSku]['m_frame_type'];
             }
-
-            console.log(frameWidth);
-            console.log(frameType);
-
             // var linerData = [
             //     {
             //         m_sku: 'L0023',
@@ -781,8 +857,6 @@ define([
         },
 
         getOuterDimensionCalc: function (artworkData) {
-            console.log("getOuterDimensionCalc");
-
             var glassWidth = artworkData.outerWidth - artworkData.frameWidth * 2 - artworkData.linerWidth * 2;
 
             if (artworkData.frameType.toLowerCase() == "standard") {
@@ -809,182 +883,8 @@ define([
             return [glassWidth, glassHeight];
         },
 
-        /* checkTopMatCondition: function () {
-           console.log("topmat");
-           var configLevel, isDefaultTopMat = 0, requireTopMatForTreatment, selectedMediumOption,
-               selectedTreatmentOption, returnedData, defaultConfig;
-
-           configLevel = $('#pz_platform_product_level').val();
-           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
-           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-
-           returnedData = JSON.parse($(this.options.apiReturnData).val());
-           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
-           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-           requireTopMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_top_mat']);
-
-           defaultConfig = JSON.parse($('#pz_magento_default_options').val());
-           $.each(defaultConfig, function (key, data) {
-               if (key == 'top_mat_default_sku' && data) {
-                   isDefaultTopMat = 1;
-                   return false;
-               }
-           });
-
-           if (configLevel <= 4) {
-               if (selectedMediumOption && selectedTreatmentOption) {
-                   if (this.hasChangedMediaTreatment()) {
-                       console.log('1ifcond');
-                       console.log(requireTopMatForTreatment);
-                       if (requireTopMatForTreatment) {
-                           console.log('req');
-                           this.getFirstMatCondition('topmat');
-                       } else {
-                           console.log('req else');
-                           //disable topmat
-                           this.callMatRightContent([], 'topmat');
-                       }
-                   } else {
-                       console.log("default op");
-                       if (isDefaultTopMat) {
-                           console.log("have default op");
-                           this.getFirstMatCondition('topmat');
-                       } else {
-                           console.log('have default op else');
-                           //disable topmat
-                           this.callMatRightContent([], 'topmat');
-                       }
-                   }
-               } else {
-                   //disable topmat
-                   this.callMatRightContent([], 'topmat');
-               }
-           }
-       },
-
-       checkBottomMatCondition: function () {
-           console.log("botmat");
-           var configLevel, isDefaultBottomMat = 0, requireBottomMatForTreatment, selectedMediumOption,
-               selectedTreatmentOption, returnedData, defaultConfig;
-
-           configLevel = $('#pz_platform_product_level').val();
-           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
-           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-
-           returnedData = JSON.parse($(this.options.apiReturnData).val());
-           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
-           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-           requireBottomMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_bottom_mat']);
-
-           defaultConfig = JSON.parse($('#pz_magento_default_options').val());
-           $.each(defaultConfig, function (key, data) {
-               if (key == 'bottom_mat_default_sku' && data) {
-                   isDefaultBottomMat = 1;
-                   return false;
-               }
-           });
-
-           if (configLevel <= 4) {
-               if (selectedMediumOption && selectedTreatmentOption) {
-                   if (this.hasChangedMediaTreatment()) {
-                       console.log('1ifcond');
-                       if (requireBottomMatForTreatment) {
-                           console.log('req');
-                           this.getFirstMatCondition('bottommat');
-                       } else {
-                           //disable bottommat
-                           this.callMatRightContent([], 'bottommat');
-                       }
-                   } else {
-                       console.log("default op");
-                       if (isDefaultBottomMat) {
-                           console.log("have default op");
-                           this.getFirstMatCondition('bottommat');
-                       } else {
-                           //disable bottommat
-                           this.callMatRightContent([], 'bottommat');
-                       }
-                   }
-               } else {
-                   //disable bottommat
-                   this.callMatRightContent([], 'bottommat');
-               }
-           }
-       },
-
-       getFirstMatCondition: function (matTypeOption) {
-           console.log("getFirstMatCondition");
-           var isDefaultMat, isDefaultTopMat = 0, isDefaultBottomMat = 0, glassDimention, artworkData, width, height,
-               defaultConfig;
-
-           defaultConfig = JSON.parse($('#pz_magento_default_options').val());
-           artworkData = this.getArtworkData();
-           glassDimention = getGlassDimention(artworkData);
-           width = glassDimention[0];
-           height = glassDimention[1];
-           console.log("glassDimention");
-           console.log(glassDimention);
-
-           $.each(defaultConfig, function (key, data) {
-               if (key == 'top_mat_default_sku' && data) {
-                   isDefaultTopMat = 1;
-                   return false;
-               }
-           });
-
-           $.each(defaultConfig, function (key, data) {
-               if (key == 'bottom_mat_default_sku' && data) {
-                   isDefaultBottomMat = 1;
-                   return false;
-               }
-           });
-
-
-           isDefaultMat = (matTypeOption == 'topmat') ? isDefaultTopMat : isDefaultBottomMat;
-
-           if (width > 40 && height > 60) {
-               console.log('1condition');
-               //display default mat with no op to select
-               this.getMatArray('default', matTypeOption);
-           } else {
-               if (this.hasChangedMediaTreatment() || this.hasChangedSizeFrame()) {
-                   console.log('1con elas if');
-                   this.getSecondMatCondition(matTypeOption);
-               } else {
-                   if (isDefaultMat) {
-                       console.log('1con elas esle if');
-                       //display default mat
-                       this.getMatArray('default', matTypeOption);
-                   } else {
-                       console.log('1con elas esle else if');
-                       this.getSecondMatCondition(matTypeOption);
-                   }
-               }
-           }
-
-       },
-
-       getSecondMatCondition: function (matTypeOption) {
-           console.log("getSecondMatCondition");
-           var glassDimention, width, height, artworkData;
-
-           artworkData = this.getArtworkData();
-           glassDimention = getGlassDimention(artworkData);
-           width = glassDimention[0];
-           height = glassDimention[1];
-
-           if (width > 32 && height > 40) {
-               console.log("over");
-               this.getMatArray('oversized', matTypeOption);
-           } else {
-               console.log("stand");
-               this.getMatArray('standard', matTypeOption);
-           }
-       },*/
-
-        /*getMatArray: function (type, matTypeOption) {
+        getMatArray: function (type, matTypeOption) {
             type = type.trim();
-            console.log("getMatArray");
             var i = 0, matArray = [], defaultConfig, defaultMatSku;
             var matData = [
                 {
@@ -1049,14 +949,10 @@ define([
                 }
 
             });
-
-            console.log(matArray);
             this.callMatRightContent(matArray, matTypeOption);
-        },*/
+        },
 
-        /*checkLinerCondition: function () {
-            console.log("checkLinerCondition");
-
+        checkLinerCondition: function () {
             var configLevel, isDefaultLiner = 0, requireLinerForTreatment, frameType, selectedMediumOption,
                 selectedTreatmentOption, selectedFrameSku, returnedFrameData, returnedData, defaultConfig;
 
@@ -1209,7 +1105,7 @@ define([
 
             console.log(linerArray);
             this.callLinerRightContent(linerArray);
-        },*/
+        },
 
         callFrameRightContent: function (size) {
             var self = this, selectedMedia, selectedTreatment, returnedData, returnedFrameData;
@@ -1241,138 +1137,164 @@ define([
             var frameTypesAllowed = [];
             console.log(selectedTreatment);
             //if(returnedData[selectedMedia]['treatment'][selectedTreatment].hasOwnProperty('frames')) {
+            let noframeShow = 0;
             $.each(returnedData[selectedMedia]['treatment'][selectedTreatment]['frames'], function (framekey, framedata) {
-                //frameTypesAllowed.push(framekey);
                 frameTypesAllowed.push(framedata);
+                if(framedata.toLowerCase().includes('unframed'))   {
+                    noframeShow = 1;
+                }
             });
             //}
 
             //frameTypesAllowed = ["Standard"];
 
             var selectedFrameText = '';
-            var mediaframehtml = '<li class="pz-design-item" data-tab="" data-color="" data-sku="No Frame" data-width="" data-color-frame="" data-type="">' +
+            var selected = '';
+            if(self.vars.pageEdit == 0 && self.vars.cartProperties['frame'])   {
+                 if(self.vars.cartProperties['frame'] ==  'No Frame')    {
+                    selected = 'selectedFrame';
+                    self.vars.customCartProperty[self.vars.tabLabels['frameli']] = 'No Frame';
+                }
+                self.vars.tabloops++;
+            }            
+            var mediaframehtml = '<li class="pz-design-item zeroth-value ' + selected + '" data-tab="" data-color="" data-sku="No Frame" data-width="" data-color-frame="" data-type="">' +
                 '<div class="pz-design-item-content">' +
                 '<div class="pz-design-item-img" style="background: url(&quot;https://devcloud.productimize.com/v3/promizenode/./assets/images/61/OptionImages/StandardImage/IMAGE-1608031183157.PNG&quot;); width: 50px; height: 50px;"></div>' +
                 '<div class="pz-design-item-name"> No Frame </div>' +
                 '</div>' +
                 '</li>';
-            let widthdata = [];
-            let widthLi = '<li class="pz-design-item widthli" id="widthli0">Select Width</li>';
-            let typeLi = '<li class="pz-design-item typeli" id="typeli0">Select Type</li>';
-            let colorlist = '<div class="clearcolor">CLEAR ALL</div><div class="maincolor"><input type="checkbox" id="All Color" class="allcolorinput" name="All Color" value="All Color" /><label for="All Color"> All Color</label></div>';
-            let typearray = [];
-            $.each(returnedFrameData, function (framekey, framedata) {
-                if ($.inArray(framedata['m_frame_type'], frameTypesAllowed) !== -1) {
-                    var minRabbetDepth = parseFloat(returnedData[selectedMedia]['treatment'][selectedTreatment]['min_rabbet_depth']);
-                    artworkData.outerWidth = selectedSize[0];
-                    artworkData.outerHeight = selectedSize[1];
-                    artworkData.frameWidth = framedata['m_frame_width'];
-                    artworkData.linerWidth = 0;
-                    artworkData.frameType = framedata['m_frame_type'];
-                    var glassDimention = getGlassDimention(artworkData); console.log(glassDimention);
-                    var glassSize = glassDimention[0] * glassDimention[1];
-                    //framedata['m_max_outer_size'] >= glassSize
-                    console.log(framedata['m_frame_rabbet_depth'], " ",  minRabbetDepth,  " ", framedata['m_max_outer_size'],  " ", glassSize);
-                    if (parseFloat(framedata['m_frame_rabbet_depth']) >= minRabbetDepth && (parseFloat(framedata['m_max_outer_size']) >= parseFloat(glassSize) / 144) ) {
-                        if ($.inArray(framedata['m_frame_width'], widthdata) == -1) {
-                            console.log(framedata)
-                            widthdata.push(framedata['m_frame_width']);
-                            let dataKey = framedata['m_frame_width'].replace(/\./g, "") + ',' + framedata['m_color_family'] + ',' + framedata['m_frame_type'];
-                            widthLi += '<li class="pz-design-item widthli" dataKey="' + dataKey + '" id="widthli' + framedata['m_frame_width'].replace(/\./g, "") + '">' + framedata['m_frame_width'] + '</li>';
+            let widthLi = '';
+            let typeLi = '';
+            let colorlist = '';
+            if(noframeShow == 0)    {
+                mediaframehtml = '';
+            
+                let widthdata = [];
+                widthLi = '<li class="pz-design-item widthli" id="widthli0">Select Width</li>';
+                typeLi = '<li class="pz-design-item typeli" id="typeli0">Select Type</li>';
+                colorlist = '<div class="clearcolor">CLEAR ALL</div><div class="maincolor"><input type="checkbox" id="All Color" class="allcolorinput" name="All Color" value="All Color" /><label for="All Color"> All Color</label></div>';
+                let typearray = [];
+                $.each(returnedFrameData, function (framekey, framedata) {
+                    if ($.inArray(framedata['m_frame_type'], frameTypesAllowed) !== -1) {
+                        var minRabbetDepth = parseFloat(returnedData[selectedMedia]['treatment'][selectedTreatment]['min_rabbet_depth']);
+                        artworkData.outerWidth = selectedSize[0];
+                        artworkData.outerHeight = selectedSize[1];
+                        artworkData.frameWidth = framedata['m_frame_width'];
+                        artworkData.linerWidth = 0;
+                        artworkData.frameType = framedata['m_frame_type'];
+                        var glassDimention = getGlassDimention(artworkData); console.log(glassDimention);
+                        var glassSize = glassDimention[0] * glassDimention[1];
+                        //framedata['m_max_outer_size'] >= glassSize
+                        console.log(framedata['m_frame_rabbet_depth'], " ",  minRabbetDepth,  " ", framedata['m_max_outer_size'],  " ", glassSize);
+                        if (parseFloat(framedata['m_frame_rabbet_depth']) >= minRabbetDepth && framedata['m_max_outer_size'] >= glassSize) {
+                            if ($.inArray(framedata['m_frame_width'], widthdata) == -1) {
+                                console.log(framedata)
+                                widthdata.push(framedata['m_frame_width']);
+                                let dataKey = framedata['m_frame_width'].replace(/\./g, "") + ',' + framedata['m_color_family'] + ',' + framedata['m_frame_type'];
+                                widthLi += '<li class="pz-design-item widthli" dataKey="' + dataKey + '" id="widthli' + framedata['m_frame_width'].replace(/\./g, "") + '">' + framedata['m_frame_width'] + '</li>';
 
-                            if ($.inArray(framedata['m_frame_type'].trim(), typearray) == -1) {
-                                typearray.push(framedata['m_frame_type']);
+                                if ($.inArray(framedata['m_frame_type'].trim(), typearray) == -1) {
+                                    typearray.push(framedata['m_frame_type']);
+                                }
+
+
+                                //typeLi += '<li class="pz-design-item typeli" id="typeli'+framedata['m_frame_type']+'">'+framedata['m_frame_type']+'</li>';
                             }
 
+                            if (framedata['m_color_family']) {
+                                if (!frameColorFilter[framedata['m_color_family']]) {
+                                    frameColorFilter[framedata['m_color_family']] = [];
+                                    framesizefilter[framedata['m_color_family']] = [];
+                                    frametypefilter[framedata['m_color_family']] = [];
+                                }
+                                if ($.inArray(framedata['m_color_frame'].trim(), frameColorFilter[framedata['m_color_family']]) == -1) {
+                                    frameColorFilter[framedata['m_color_family']].push(framedata['m_color_frame'].trim());
+                                    framesizefilter[framedata['m_color_family']].push(framedata['m_frame_width'].replace(/\./g, ""));
+                                    frametypefilter[framedata['m_color_family']].push(framedata['m_frame_type'].replace(/\./g, ""));
+                                }
+                            }
 
-                            //typeLi += '<li class="pz-design-item typeli" id="typeli'+framedata['m_frame_type']+'">'+framedata['m_frame_type']+'</li>';
+                            var selected = '';
+                            if (product_level == 4) {
+                                if (frameDefault == framedata['m_sku']) { //&& selectedTreatment == defaultTreatment
+                                    selected = 'defaultOption';
+                                }
+                            }
+                            if(self.vars.pageEdit == 0 && self.vars.cartProperties['frame'])   {
+                                if(self.vars.cartProperties['frame'] ==  framedata['m_sku'])    {
+                                    selected = 'selectedFrame';
+                                    self.vars.customCartProperty[self.vars.tabLabels['frameli']] = framedata['m_sku'];
+                                    if(framedata['m_sku'] != '' && framedata['m_color_family'] != '') {
+                                        $('.pz-item-selected-frame').html(framedata['m_sku']+'/'+framedata['m_color_family']);
+                                        $('.pz-item-selected-frame').attr('data-sku', framedata['m_sku']);
+                                    }
+                                }
+                            }
+                            var framePath = 'https://devcloud.productimize.com/productimizedemo/perficientJS/images/frames/renderer_';
+                            var cornerImage = framePath + framedata['m_sku'] + '_corner1.PNG';
+                            mediaframehtml += '<li class="pz-design-item ' + selected + '" data-color="' + framedata['m_color_family'] + '" data-sku="' + framedata['m_sku'] + '" data-width="' + framedata['m_frame_width'] + '" data-color-frame="' + framedata['m_color_frame'] + '" data-type="' + framedata['m_frame_type'] + '">' +
+                                '<div class="pz-design-item-content">' +
+                                '<div class="pz-design-item-img" style="background: url(' + cornerImage + '); width: 50px; height: 50px;"></div>' +
+                                '<div class="pz-design-item-name">' + framedata['m_sku'] + ' </div>' +
+                                '<div class="pz-design-item-name">' + framedata['m_frame_width'] + '"</div>' +
+                                '</div>' +
+                                '</li>';
                         }
-
-                        if (framedata['m_color_family']) {
-                            if (!frameColorFilter[framedata['m_color_family']]) {
-                                frameColorFilter[framedata['m_color_family']] = [];
-                                framesizefilter[framedata['m_color_family']] = [];
-                                frametypefilter[framedata['m_color_family']] = [];
-                            }
-                            if ($.inArray(framedata['m_color_frame'].trim(), frameColorFilter[framedata['m_color_family']]) == -1) {
-                                frameColorFilter[framedata['m_color_family']].push(framedata['m_color_frame'].trim());
-                                framesizefilter[framedata['m_color_family']].push(framedata['m_frame_width'].replace(/\./g, ""));
-                                frametypefilter[framedata['m_color_family']].push(framedata['m_frame_type'].replace(/\./g, ""));
-                            }
-                        }
-
-                        var selected = '';
-                        if (product_level == 4) {
-                            if (frameDefault == framedata['m_sku']) { //&& selectedTreatment == defaultTreatment
-                                selected = 'defaultOption';
-                            }
-                        }
-                        var framePath = 'https://devcloud.productimize.com/productimizedemo/perficientJS/images/frames/renderer_';
-                        var cornerImage = framePath + framedata['m_sku'] + '_corner1.PNG';
-                        mediaframehtml += '<li class="pz-design-item ' + selected + '" data-color="' + framedata['m_color_family'] + '" data-sku="' + framedata['m_sku'] + '" data-width="' + framedata['m_frame_width'] + '" data-color-frame="' + framedata['m_color_frame'] + '" data-type="' + framedata['m_frame_type'] + '">' +
-                            '<div class="pz-design-item-content">' +
-                            '<div class="pz-design-item-img" style="background: url(' + cornerImage + '); width: 50px; height: 50px;"></div>' +
-                            '<div class="pz-design-item-name">' + framedata['m_sku'] + ' </div>' +
-                            '<div class="pz-design-item-name">' + framedata['m_frame_width'] + '"</div>' +
-                            '</div>' +
-                            '</li>';
                     }
-                }
-            });
+                });
 
+                $.each(frameColorFilter, function (frameColorFilterkey, frameColorFilterdata) {
+                    // console.log(framesizefilter[frameColorFilterkey])
+                    // console.log(frametypefilter[frameColorFilterkey])
+                    var joinkeys = framesizefilter[frameColorFilterkey].concat(frametypefilter[frameColorFilterkey]).concat(frameColorFilterkey.replace(/\s/g, ''));
+                    console.log(joinkeys)
+                    colorlist += '<div class="maincolor"><div dataKey="' + joinkeys + '" class="checkmainarea" id="maincolor' + frameColorFilterkey.replace(/\s/g, '').toLowerCase() + '"><input type="checkbox" class="maincolorinput" id="' + frameColorFilterkey + '" name="' + frameColorFilterkey + '" value="' + frameColorFilterkey + '"><label for="' + frameColorFilterkey + '"> ' + frameColorFilterkey + '</label></div><div class="subcolor">';
+                    $.each(frameColorFilterdata, function (key, val) {
+                        colorlist += '<div class="checkarea" id="subcolor' + val.replace(/\s/g, '').toLowerCase() + '"><input type="checkbox" class="subcolorinput" id="' + val + '" name="' + val + '" value="' + val + '"><label for="' + val + '"> ' + val + '</label></div>';
+                    })
+                    colorlist += '</div></div>';
+                });
+
+                $.each(typearray, function (typekey, typeval) {
+                    typeLi += '<li class="pz-design-item typeli" id="typeli' + typeval + '">' + typeval + '</li>';
+                });
+               
+                console.log($('.frameli').find('li').length);
+            }
             $('.frameli').html(mediaframehtml);
-
-            $.each(frameColorFilter, function (frameColorFilterkey, frameColorFilterdata) {
-                // console.log(framesizefilter[frameColorFilterkey])
-                // console.log(frametypefilter[frameColorFilterkey])
-                var joinkeys = framesizefilter[frameColorFilterkey].concat(frametypefilter[frameColorFilterkey]).concat(frameColorFilterkey.replace(/\s/g, ''));
-                console.log(joinkeys)
-                colorlist += '<div class="maincolor"><div dataKey="' + joinkeys + '" class="checkmainarea" id="maincolor' + frameColorFilterkey.replace(/\s/g, '').toLowerCase() + '"><input type="checkbox" class="maincolorinput" id="' + frameColorFilterkey + '" name="' + frameColorFilterkey + '" value="' + frameColorFilterkey + '"><label for="' + frameColorFilterkey + '"> ' + frameColorFilterkey + '</label></div><div class="subcolor">';
-                $.each(frameColorFilterdata, function (key, val) {
-                    colorlist += '<div class="checkarea" id="subcolor' + val.replace(/\s/g, '').toLowerCase() + '"><input type="checkbox" class="subcolorinput" id="' + val + '" name="' + val + '" value="' + val + '"><label for="' + val + '"> ' + val + '</label></div>';
-                })
-                colorlist += '</div></div>';
-            });
-
-            $.each(typearray, function (typekey, typeval) {
-                typeLi += '<li class="pz-design-item typeli" id="typeli' + typeval + '">' + typeval + '</li>';
-            });
-
-
             $('.pz-frame .colorlist').html(colorlist);
-            console.log($('.frameli').find('li').length);
-
+            $('.pz-optionwidthsearch ul').html(widthLi);
+            $('.pz-frame').find('.pz-optiontypesearch ul').html(typeLi);
             console.log($('.frameli').find('li').length);
             //$('.frameli').owlCarousel('destroy');
 
 
-            $('.pz-optionwidthsearch ul').html(widthLi);
-            $('.pz-frame').find('.pz-optiontypesearch ul').html(typeLi);
+            
 
-            // if($('.frameli').find('li').length > 0) {
-            //     $('.frameli').owlCarousel('destroy');
-            //     $('.frameli').owlCarousel({
-            //         loop: false,
-            //         margin: 10,
-            //         nav: true,
-            //         navText: [
-            //             '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
-            //             '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
-            //         ],
-            //         responsive: {
-            //             0: {
-            //                 items: 1
-            //             },
-            //             600: {
-            //                 items: 3
-            //             },
-            //             1000: {
-            //                 items: 5
-            //             }
-            //         }
-            //     });
-            // }
-            // this.checkLinerCondition();
+            if($('.frameli').find('li').length > 0) {
+                $('.frameli').owlCarousel('destroy');
+                $('.frameli').owlCarousel({
+                    loop: false,
+                    margin: 10,
+                    nav: true,
+                    navText: [
+            '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
+            '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
+        ],
+                    responsive: {
+                        0: {
+                            items: 1
+                        },
+                        600: {
+                            items: 3
+                        },
+                        1000: {
+                            items: 5
+                        }
+                    }
+                });
+        }
+            this.checkLinerCondition();
 
         },
         callLinerRightContent: function (linerArray) {
@@ -1402,7 +1324,16 @@ define([
             });
             frameTypesAllowed = ["liner"];
             var selectedFrameText = '';
-            var mediaframehtml = '<li class="pz-design-item no-liner zeroth-value" data-color="" data-sku="No Liner" data-width="" data-color-frame="" data-type="">' +
+            var selected = '';
+            if(self.vars.pageEdit == 0 && self.vars.cartProperties['liner'])   {
+                console.log(self.vars.cartProperties['liner'])
+                if(self.vars.cartProperties['liner'] ==  'No Liner')    {
+                    selected = 'selectedFrame';
+                    self.vars.customCartProperty[self.vars.tabLabels['linerli']] = 'No Liner';
+                }
+                self.vars.tabloops++;
+            }
+            var mediaframehtml = '<li class="pz-design-item no-liner zeroth-value '+selected+'" data-color="" data-sku="No Liner" data-width="" data-color-frame="" data-type="">' +
                 '<div class="pz-design-item-content">' +
                 '<div class="pz-design-item-img" style="background: url(&quot;https://devcloud.productimize.com/v3/promizenode/./assets/images/61/OptionImages/StandardImage/IMAGE-1608031183157.PNG&quot;); width: 50px; height: 50px;"></div>' +
                 '<div class="pz-design-item-name">No Liner</div>' +
@@ -1434,10 +1365,20 @@ define([
                                 frameColorFilter[framedata['m_color_family']].push(framedata['m_color_liner'].trim());
                             }
                         }
-                        var selected = '';
+                        selected = '';
                         if (product_level == 4) {
                             if (linerDefault == framedata['m_sku']) { //&& selectedTreatment == defaultTreatment
                                 selected = 'defaultOption';
+                            }
+                        }
+                        if(self.vars.pageEdit == 0 && self.vars.cartProperties['liner'])   {
+                            if(self.vars.cartProperties['liner'] ==  framedata['m_sku'])    {
+                                selected = 'selectedFrame';
+                                self.vars.customCartProperty[self.vars.tabLabels['linerli']] = framedata['m_sku'];
+                                if(framedata['m_sku'] != '' && framedata['m_color_family'] != '') {
+                                    $('.pz-item-selected-liner').html(framedata['m_sku']+'/'+framedata['m_color_family']);
+                                    $('.pz-item-selected-liner').attr('data-sku', framedata['m_sku']);
+                                }
                             }
                         }
                         var linerPath = 'https://devcloud.productimize.com/productimizedemo/perficientJS/images/liner/renderer_';
@@ -1524,11 +1465,33 @@ define([
             var requiresTopMat = returnedData[selectedMedia]['treatment'][selectedTreatment]['requires_top_mat'];
             var requiresBotMat = returnedData[selectedMedia]['treatment'][selectedTreatment]['requires_bottom_mat'];
             var selectedFrameText = '';
-            var mediaframehtml = '<li class="pz-design-item no-mat zeroth-value" data-color="" data-sku="" data-width="" data-color-frame="" data-type="">' +
-                '<div class="pz-design-item-content">' +
-                '<div class="pz-design-item-img" style="background: url(&quot;https://devcloud.productimize.com/v3/promizenode/./assets/images/61/OptionImages/StandardImage/IMAGE-1608031183157.PNG&quot;); width: 50px; height: 50px;"></div>' +
-                '<div class="pz-design-item-name">No Mat</div>' +
-                '</div>' +
+            var selected = '';
+            if(self.vars.pageEdit == 0 && self.vars.cartProperties['top mat'])   {
+                if(self.vars.cartProperties['top mat'] ==  'No Mat')    {
+                    selected = 'selectedFrame';
+                    self.vars.customCartProperty[self.vars.tabLabels['topmatli']] = 'No Mat';
+                }
+                self.vars.tabloops++;
+            }
+            var mediaframehtml = '<li class="pz-design-item no-mat zeroth-value '+selected+'" data-color="" data-sku="" data-width="" data-color-frame="" data-type="">'+
+                '<div class="pz-design-item-content">'+
+                '<div class="pz-design-item-img" style="background: url(&quot;https://devcloud.productimize.com/v3/promizenode/./assets/images/61/OptionImages/StandardImage/IMAGE-1608031183157.PNG&quot;); width: 50px; height: 50px;"></div>'+
+                '<div class="pz-design-item-name">No Mat</div>'+
+                '</div>'+
+                '</li>';
+            selected = '';
+            if(self.vars.pageEdit == 0 && self.vars.cartProperties['bottom mat'])   {
+                if(self.vars.cartProperties['bottom mat'] ==  'No Mat')    {
+                    selected = 'selectedFrame';
+                    self.vars.customCartProperty[self.vars.tabLabels['bottommatli']] = 'No Mat';
+                }
+                self.vars.tabloops++;
+            }
+            var mediaframebothtml = '<li class="pz-design-item no-mat zeroth-value '+selected+'" data-color="" data-sku="" data-width="" data-color-frame="" data-type="">'+
+                '<div class="pz-design-item-content">'+
+                '<div class="pz-design-item-img" style="background: url(&quot;https://devcloud.productimize.com/v3/promizenode/./assets/images/61/OptionImages/StandardImage/IMAGE-1608031183157.PNG&quot;); width: 50px; height: 50px;"></div>'+
+                '<div class="pz-design-item-name">No Mat</div>'+
+                '</div>'+
                 '</li>';
             var nomathtml = mediaframehtml;
             let widthdata = [];
@@ -1541,13 +1504,14 @@ define([
             let typearray = [];
 
             var requiresMat = (matTypeOption == 'topmat') ?  requiresTopMat : requiresBotMat;
-            if( (matTypeOption == "topmat" && parseInt(requiresTopMat) !=0) || (matTypeOption != "bottommat" && parseInt(requiresBotMat) !=0)) {
+            if( (matTypeOption == "topMat" && parseInt(requiresTopMat) !=0) || (matTypeOption != "topMat" && parseInt(requiresBotMat) !=0)) {
                 mediaframehtml = '';
+                mediaframebothtml = '';
                 $.each(returnedFrameData, function (framekey, framedata) {
                     console.log(framedata);
                     console.log(framedata['m_mat_type']);
                     console.log(frameTypesAllowed);
-                    if ($.inArray(framedata['m_mat_type'].toLowerCase(), frameTypesAllowed) !== -1) {
+                    if ($.inArray(framedata['m_mat_type'], frameTypesAllowed) !== -1) {
                         //if(parseFloat(framedata['m_mat_rabbet_depth']) >= parseFloat(returnedData[selectedMedia]['treatment'][selectedTreatment]['min_rabbet_depth'])) {
                         // if($.inArray( framedata['m_mat_width'], widthdata ) == -1)   {
                         //     console.log(framedata)
@@ -1569,7 +1533,7 @@ define([
                                 frameColorFilter[framedata['m_color_family']].push(framedata['m_color_mat'].trim());
                             }
                         }
-                        var selected = '';
+                        selected = '';
                         if (i == 1) {
                             // selected = 'selectedFrame';
                             selectedFrameText = ' / ' + ' B97 ' + ' / ' + ' White';
@@ -1580,7 +1544,16 @@ define([
 
                             //callFrameData(data);
                         }
-
+                        if(self.vars.pageEdit == 0 && self.vars.cartProperties['top mat'])   {
+                            if(self.vars.cartProperties['top mat'] ==  framedata['m_sku'])    {
+                                selected = 'selectedFrame';
+                                self.vars.customCartProperty[self.vars.tabLabels['topmatli']] = framedata['m_sku'];
+                                if(framedata['m_sku'] != '' && framedata['m_color_family'] != '') {
+                                    $('.pz-item-selected-topmat').html(framedata['m_sku']+'/'+framedata['m_color_family']);
+                                    $('.pz-item-selected-topmat').attr('data-sku', framedata['m_sku']);
+                                }
+                            }
+                        }                  
                         var matPath = 'https://devcloud.productimize.com/productimizedemo/perficientJS/images/mats/';
                         var matThumbImage = matPath + framedata['m_sku'] + '_thumbnail.PNG';
 
@@ -1591,6 +1564,28 @@ define([
                             '<div class="pz-design-item-name">' + framedata['m_color_mat'] + '</div>' +
                             '</div>' +
                             '</li>';
+
+                        selected = '';
+                        if(self.vars.pageEdit == 0 && self.vars.cartProperties['bottom mat'])   {
+                            console.log('ffffff',self.vars.cartProperties['bottom mat'],'sss',framedata['m_sku'])
+                            if(self.vars.cartProperties['bottom mat'] ==  framedata['m_sku'])    {
+                                selected = 'selectedFrame';
+                                console.log('ffffff',self.vars.cartProperties['bottom mat'],'sss',framedata['m_sku'],selected)
+                                self.vars.customCartProperty[self.vars.tabLabels['bottommatli']] = framedata['m_sku'];
+                                if(framedata['m_sku'] != '' && framedata['m_color_family'] != '') {
+                                    $('.pz-item-selected-bottommat').html(framedata['m_sku']+'/'+framedata['m_color_family']);
+                                    $('.pz-item-selected-bottommat').attr('data-sku', framedata['m_sku']);
+                                }
+                            }
+                        }
+
+                        mediaframebothtml += '<li class="pz-design-item ' + selected + '" data-color="' + framedata['m_color_family'] + '" data-sku="' + framedata['m_sku'] + '" data-width="' + framedata['m_mat_width'] + '" data-color-frame="' + framedata['m_color_mat'] + '" data-type="' + framedata['m_mat_type'] + '">' +
+                        '<div class="pz-design-item-content">' +
+                        '<div class="pz-design-item-img" style="background: url('+matThumbImage+'); width: 50px; height: 50px;"></div>' +
+                        '<div class="pz-design-item-name">' + framedata['m_sku'] + ' </div>' +
+                        '<div class="pz-design-item-name">' + framedata['m_color_mat'] + '</div>' +
+                        '</div>' +
+                        '</li>';
                         //}
                     }
                     i++;
@@ -1611,14 +1606,9 @@ define([
             $.each(typearray, function (typekey, typeval) {
                 typeLi += '<li class="pz-design-item typeli" id="typeli' + typeval + '">' + typeval + '</li>';
             });
-            console.log("Line 1340");
-            console.log(mediaframehtml);
-            console.log(requiresTopMat);
-            console.log(requiresBotMat);
-
-            if (matTypeOption == "topmat") {console.log("elseif");
+            if (matTypeOption == "topmat") {
                 $('.topmatli').html("");
-                if(parseInt(requiresTopMat) == 0) { console.log("elseif if");
+                if(parseInt(requiresTopMat) == 0) {
                     $('.topmatli').html(nomathtml);
                 } else {
                     $('.topmatli').html(mediaframehtml);
@@ -1631,13 +1621,29 @@ define([
                 if(parseInt(requiresBotMat) == 0) { console.log("elseif if");
                     $('.bottommatli').html(nomathtml);
                 } else {
-                    $('.bottommatli').html(mediaframehtml);
+                    $('.bottommatli').html(mediaframebothtml);
                 }
                 $('.pz-bottom-mat .colorlist').html(colorlistbot);
                 $('.pz-bottom-mat').find('.pz-optiontypesearch ul').html(typeLi);
             }
 
+            // if(parseInt(requiresTopMat) !=0) {
+            //     $('.topmatli').html(mediaframehtml);
+            // }
+            // if(parseInt(requiresBotMat) !=0) {
+            //     $('.bottommatli').html(mediaframebothtml);
+            // }
 
+            console.log(nomathtml);
+
+            
+            if(self.vars.pageEdit == 0)   {
+                setTimeout(() => {
+                    renderEditImage(self.vars.customCartProperty);
+                    self.vars.pageEdit = 1;
+                }, 3000);
+               
+            }
             //         $('.linerli').owlCarousel('destroy');
             //         $('.linerli').owlCarousel({
             //             loop: false,
@@ -1670,7 +1676,6 @@ define([
 
         },
         resetNextTabs: function (currentVal, setSelectedOptions = null) {
-            //console.log("currentVal ", currentVal)
             var localObj = this.vars.customizerTabsObj;
             var currentTab = currentVal.toLowerCase();
             var upcoming = '';
@@ -1678,19 +1683,16 @@ define([
             var minsizetext = $('.pz-size .rangeleft span').length;
             if (currentTab == 'medtrt' && minsizetext) {
                 var mintext = $('.pz-size .rangeleft span').html();
-                //console.log('inside condition');
-                //console.log(mintext);
                 //$( "#slider" ).slider( "value", '12x16');
                 $('.pz-size output').html(mintext);
                 $('.pz-size output').css({'position': 'absolute', 'left': '0%'});
             }
+            let customCartProperty = this.vars.customCartProperty;
+            let tabLabels = this.vars.tabLabels;
             $.each(this.vars.customizerTabs, function (tab, value) {
                 if (value == currentTab) {
                     upcoming = tab;
                 }
-                //console.log(" tab " , tab);
-                //console.log("value ", value);
-                //console.log("upcoming  ", upcoming);
                 if (upcoming != '' && tab > upcoming) {
                     resetSelectedOptionInc++;
                     resetSelectedOptions.push(value);
@@ -1698,15 +1700,23 @@ define([
                     $('.pz-design-item-list.' + value + 'li li').removeClass('selectedFrame');
                     localObj[value][0] = 0;
                     //localObj[value][1] = 0;
+                    if(customCartProperty[tabLabels[value]])   {
+                        delete customCartProperty[tabLabels[value]];
+                    }
+                    if(customCartProperty[tabLabels[value+'li']])   {
+                        delete customCartProperty[tabLabels[value+'li']];
+                    }
                     $('.pz-custom-item-header[data-tab=' + value + '] .pz-item-header .pz-item-step-number').css('display', 'flex');
                     $('.pz-custom-item-header[data-tab=' + value + '] .pz-item-header .pz-tick.pz-tick-success').css('display', 'none');
+                    $('[data-tab=' + value + ']').parent().find('.pz-custom-item-body textarea').val('');
+                    $('[data-tab=' + value + ']').parent().find('.pz-custom-item-body input').prop('checked', false);
                 }
             });
             this.vars.customizerTabsObj = localObj;
 
 
             // Call update canvas
-            if (resetSelectedOptionInc > 0) {
+            if (resetSelectedOptionInc > 0 && this.vars.pageEdit == 1) {
                 updatePZSelectedOptions(setSelectedOptions, resetSelectedOptions);
             }
 
