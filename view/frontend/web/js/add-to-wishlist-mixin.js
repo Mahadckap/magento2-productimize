@@ -4,9 +4,12 @@
  */
 define([
     'jquery',
+    'mage/url',
     'jquery-ui-modules/widget'
-], function ($) {
+], function ($, url) {
     'use strict';
+
+    var allowSubmit = false;
 
     return function (widget) {
 
@@ -38,12 +41,6 @@ define([
                         events['change ' + options[options.productType[key] + 'Info']] = dataUpdateFunc;
                     }
                 }
-                //
-                var changeMedium = 'change #medium';
-                events[changeMedium] = dataUpdateFunc;
-                var changeSize = 'change #size';
-                events[changeSize] = dataUpdateFunc;
-                //
                 this._on(events);
             },
             _updateWishlistData: function (event) {
@@ -86,7 +83,25 @@ define([
             },
             _updateAddToWishlistButton: function (dataToAdd) {
                 var self = this;
-
+                var saveCanvasUrl = url.build('productimize/index/savecanvas');
+                if (typeof getArtwork == 'function') {
+                    if (allowSubmit == false) {
+                        var dataUrl = getArtwork('jpeg');
+                        $.ajax({
+                            showLoader: true,
+                            url: saveCanvasUrl,
+                            data: {
+                                dataUrl: dataUrl
+                            },
+                            type: "POST",
+                            success: function (data) {
+                                self.assignPZCartProperties(data);
+                                allowSubmit = true;
+                                $('.towishlist').trigger('click');
+                            }
+                        });
+                    }
+                }
                 $('[data-action="add-to-wishlist"]').each(function (index, element) {
                     var params = $(element).data('post');
 
@@ -99,7 +114,7 @@ define([
                     params.data = $.extend({}, params.data, dataToAdd, {
                         'qty': $(self.options.qtyInfo).val()
                     });
-                    if($('#pz_cart_properties').val() != ''){
+                    if ($('#pz_cart_properties').val() != '') {
                         params.data = $.extend({}, params.data, dataToAdd, {
                             'pz_cart_properties': $('#pz_cart_properties').val()
                         });
@@ -113,12 +128,113 @@ define([
             _validateWishlistQty: function (event) {
                 var element = $(this.options.qtyInfo);
                 var dataToAdd = {};
-                this._updateAddToWishlistButton(dataToAdd);
+                if ($('#pz_cart_properties').length > 0) {
+                    if (this.checkifPZCartPropertiesset) {
+                        if (allowSubmit == false) {
+                            this._updateAddToWishlistButton(dataToAdd);
+                            event.preventDefault();
+                            event.stopPropagation();
+                            return;
+                        }
+                        if (allowSubmit == true) {
+                            this._updateAddToWishlistButton(dataToAdd);
+                        }
+                    }
+                }
                 if (!(element.validation() && element.validation('isValid'))) {
                     event.preventDefault();
                     event.stopPropagation();
 
                     return;
+                }
+            },
+            assignPZCartProperties: function (imageData) {
+                var encodedPZCartProperties = document.getElementById('pz_cart_properties').value;
+
+                var pzCartProperties = null;
+
+                if (encodedPZCartProperties) {
+                    pzCartProperties = JSON.parse(encodedPZCartProperties)
+                }
+
+                var outputData = {}, pzCartOutputData = {};
+                var loopInc = 0;
+
+
+                for (const property in pzSelectedOptions) {
+                    loopInc++;
+                    const data = pzSelectedOptions[property];
+                    outputData[property] = data.sku;
+                    //outputData[property] += (data.sku) ? ' ';
+
+                    if (imageData.imageUrl && loopInc == 1) {
+                        outputData['CustomImage'] = imageData.imageUrl;
+                    }
+                }
+                var glassDimention = getGlassDimention(null);
+                if (loopInc == Object.keys(pzSelectedOptions).length) {
+
+                    pzCartOutputData['Medium'] = (jQuery('.medium-select-elem')) ? jQuery('.medium-select-elem').val() : 'No Medium'
+                    pzCartOutputData['Treatment'] = (jQuery('.treatment-select-elem')) ? jQuery('.treatment-select-elem').val() : 'No Treatment'
+                    pzCartOutputData['Size'] = glassDimention[0] ?  glassDimention[0] : 100 + ' X ' + (glassDimention[1]) ? glassDimention[1] : 100;
+                    pzCartOutputData['Frame'] = (outputData['frame']) ? outputData['frame'] : 'No Frame';
+                    pzCartOutputData['Top Mat'] = (outputData['topMat']) ? outputData['topMat'] : 'No Top Mat';
+                    pzCartOutputData['Bottom Mat'] = (outputData['bottomMat']) ? outputData['bottomMat'] : 'No Bottom Mat';
+                    pzCartOutputData['Artwork Color'] = (jQuery('#pz-text')) ? jQuery('#pz-text').val() : 'No Artwork Color';
+                    pzCartOutputData['Sidemark'] = (jQuery('.pz-textarea')) ? jQuery('.pz-textarea').val() : 'No Sidemark';
+
+
+                    if (imageData.imageUrl) {
+                        pzCartOutputData['CustomImage'] = imageData.imageUrl;
+                    }
+                    document.getElementById('pz_cart_properties').value = JSON.stringify(pzCartOutputData);
+                }
+            },
+            checkifPZCartPropertiesset: function () {
+                var encodedPZCartProperties = document.getElementById('pz_cart_properties').value;
+
+                var pzCartProperties = null;
+
+                if (encodedPZCartProperties) {
+                    pzCartProperties = JSON.parse(encodedPZCartProperties)
+                }
+
+                var outputData = {}, pzCartOutputData = {};
+                var loopInc = 0;
+
+
+                for (const property in pzSelectedOptions) {
+                    loopInc++;
+                    const data = pzSelectedOptions[property];
+                    outputData[property] = data.sku;
+                    //outputData[property] += (data.sku) ? ' ';
+
+                    if (imageData.imageUrl && loopInc == 1) {
+                        outputData['CustomImage'] = imageData.imageUrl;
+                    }
+                }
+                var glassDimention = getGlassDimention(null);
+                if (loopInc == Object.keys(pzSelectedOptions).length) {
+
+                    pzCartOutputData['Medium'] = (jQuery('.medium-select-elem')) ? jQuery('.medium-select-elem').val() : 'No Medium'
+                    pzCartOutputData['Treatment'] = (jQuery('.treatment-select-elem')) ? jQuery('.treatment-select-elem').val() : 'No Treatment'
+                    pzCartOutputData['Size'] = glassDimention[0] ?  glassDimention[0] : 100 + ' X ' + (glassDimention[1]) ? glassDimention[1] : 100;
+                    pzCartOutputData['Frame'] = (outputData['frame']) ? outputData['frame'] : 'No Frame';
+                    pzCartOutputData['Top Mat'] = (outputData['topMat']) ? outputData['topMat'] : 'No Top Mat';
+                    pzCartOutputData['Bottom Mat'] = (outputData['bottomMat']) ? outputData['bottomMat'] : 'No Bottom Mat';
+                    pzCartOutputData['Artwork Color'] = (jQuery('#pz-text')) ? jQuery('#pz-text').val() : 'No Artwork Color';
+                    pzCartOutputData['Sidemark'] = (jQuery('.pz-textarea')) ? jQuery('.pz-textarea').val() : 'No Sidemark';
+
+
+                    if (imageData.imageUrl) {
+                        pzCartOutputData['CustomImage'] = imageData.imageUrl;
+                    }
+                    document.getElementById('pz_cart_properties').value = JSON.stringify(pzCartOutputData);
+                }
+                if ($('#pz_cart_properties').val() == '') {
+                    return false;
+                } else {
+                    return true;
                 }
             }
         });
@@ -126,3 +242,4 @@ define([
         return $.mage.addToWishlist;
     }
 });
+

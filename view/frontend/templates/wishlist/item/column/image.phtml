@@ -1,0 +1,32 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var \Magento\Wishlist\Block\Customer\Wishlist\Item\Column\Image $block */
+
+/** @var \Magento\Wishlist\Model\Item $item */
+$item = $block->getItem();
+$product = $item->getProduct();
+$productimizeHelper = $this->helper(\DCKAP\Productimize\Helper\Data::class);
+$wishlistOptions = [];
+$newProductImage = '';
+?>
+<?php
+    if($item->getData('wishlist_item_id')){
+        $newProductImage = $productimizeHelper->getImageurlforwishlistId($item->getData('wishlist_item_id'));
+    }
+?>
+<?php if($newProductImage == ''): ?>
+<a class="product-item-photo" tabindex="-1" href="<?= $block->escapeUrl($block->getProductUrl($item)) ?>" title="<?= $block->escapeHtmlAttr($product->getName()) ?>">
+    <?= $block->getImage($block->getProductForThumbnail($item), 'wishlist_thumbnail')->toHtml() ?>
+</a>
+<?php else: ?>
+<a class="product-item-photo" tabindex="-1" href="<?= $block->escapeUrl($block->getProductUrl($item)) ?>" title="<?= $block->escapeHtmlAttr($product->getName()) ?>">
+    <span class="product-image-container product-image-container-2048" style="width: 240px;">
+    <span class="product-image-wrapper" style="padding-bottom: 125%;">
+        <img class="product-image-photo" src="<?=$newProductImage?>" loading="lazy" width="240" height="300" alt="<?= $block->escapeHtmlAttr($product->getName()) ?>"></span>
+    </span>
+</a>
+<?php endif; ?>

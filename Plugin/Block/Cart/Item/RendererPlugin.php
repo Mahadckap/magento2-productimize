@@ -24,8 +24,8 @@ class RendererPlugin
                 $decodePzCartProperties = json_decode($pzCartProperties);
                 // Replace the product image in mini cart with customized image
                 if ($decodePzCartProperties) {
-                    if(isset($decodePzCartProperties->{' CustomImage'})) {
-                        $customizedImageURL = $decodePzCartProperties->{' CustomImage'};
+                    if(isset($decodePzCartProperties->{'CustomImage'})) {
+                        $customizedImageURL = $decodePzCartProperties->{'CustomImage'};
                         if ($customizedImageURL) {
                             $result->setImageUrl($customizedImageURL);
                         }

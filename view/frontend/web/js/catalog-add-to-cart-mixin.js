@@ -66,12 +66,14 @@ define([
                 var glassDimention = getGlassDimention(null);
                 if (loopInc == Object.keys(pzSelectedOptions).length) {
 
+                    var value = ", Gold, <span class='hint'><i class='fa fa-info-circle' aria-hidden='true'></i> Weighted<span class='pz-tooltip-content'>Left: 1.5 Top: 1.5 Right: 1.5 Bottom: 1.5</span></span>"
+
                     pzCartOutputData['Medium'] = (jQuery('.medium-select-elem')) ? jQuery('.medium-select-elem').val() : 'No Medium'
                     pzCartOutputData['Treatment'] = (jQuery('.treatment-select-elem')) ? jQuery('.treatment-select-elem').val() : 'No Treatment'
-                    pzCartOutputData['Size'] = glassDimention[0] ? glassDimention[0] : 100 + ' X ' + (glassDimention[1]) ? glassDimention[1] : 100;
+                    pzCartOutputData['Size'] = (glassDimention[0]) ? glassDimention[0] : 100 + '×' + (glassDimention[1]) ? glassDimention[1] : 100;
                     pzCartOutputData['Frame'] = (outputData['frame']) ? outputData['frame'] : 'No Frame';
-                    pzCartOutputData['Top Mat'] = (outputData['topMat']) ? outputData['topMat'] : 'No Top Mat';
-                    pzCartOutputData['Bottom Mat'] = (outputData['bottomMat']) ? outputData['bottomMat'] : 'No Bottom Mat';
+                    pzCartOutputData['Top Mat'] = (outputData['topMat']) ? value + outputData['topMat'] : 'No Top Mat';
+                    pzCartOutputData['Bottom Mat'] = (outputData['bottomMat']) ? value + outputData['bottomMat'] : 'No Bottom Mat';
                     pzCartOutputData['Artwork Color'] = (jQuery('#pz-text')) ? jQuery('#pz-text').val() : 'No Artwork Color';
                     pzCartOutputData['Sidemark'] = (jQuery('.pz-textarea')) ? jQuery('.pz-textarea').val() : 'No Sidemark';
 
@@ -87,4 +89,5 @@ define([
         return $.mage.catalogAddToCart;
     }
 });
+
 

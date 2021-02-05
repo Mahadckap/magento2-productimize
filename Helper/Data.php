@@ -33,7 +33,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
         $this->optionFactory = $optionFactory;
     }
 
-    public function getCurrentpagehandle()
+     public function getCurrentpagehandle()
     {
         return $this->request->getFullActionName();
     }
@@ -100,5 +100,37 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
             }
         }
         return $movetoWishlistvalues;
+    }
+
+    public function getImageurlforwishlistId($id)
+    {
+        $imageUrl = '';
+        $options = $this->optionFactory->create()->getCollection()->addItemFilter([$id]);
+        $options->addFieldToFilter('code', 'info_buyRequest');
+        $infoBuyrequestarray = $options->getData();
+        $infoBuyrequest = [];
+        foreach ($infoBuyrequestarray as $infoBuyrequestarraydata){
+            if(isset($infoBuyrequestarraydata['value'])){
+                $infoBuyrequest = json_decode($infoBuyrequestarraydata['value'],true);
+            }
+        }
+        if(!empty($infoBuyrequest)){
+            return $this->getImageurlfrombuyrequestdata($infoBuyrequest);
+        }
+        return $imageUrl;
+    }
+
+    public function getImageurlfrombuyrequestdata($buyRequestdata)
+    {
+        $imageUrl = '';
+        if(isset($buyRequestdata['pz_cart_properties'])){
+            if ($buyRequestdata['pz_cart_properties'] != '') {
+                $pzCartproperties = json_decode($buyRequestdata['pz_cart_properties'], true);
+                if(isset($pzCartproperties['CustomImage'])){
+                    $imageUrl = $pzCartproperties['CustomImage'];
+                }
+            }
+        }
+        return $imageUrl;
     }
 }

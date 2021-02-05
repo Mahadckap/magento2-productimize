@@ -46,16 +46,11 @@ $canApplyMsrp = $helper->isShowBeforeOrderConfirm($product) && $helper->isMinima
                             <?php $_formatedOptionValue = $block->getFormatedOptionValue($_option) ?>
                             <dt><?= $block->escapeHtml($_option['label']) ?></dt>
                             <dd>
-                                <?php if($_option['label'] == 'designedImage'): ?>
-                                    <?= '<a target="_blank" href="'.$_option['value'].'">'.$_option['value'].'</a>'; ?>
-                                <?php else: ?>
-                                    <?php if (isset($_formatedOptionValue['full_view'])): ?>
-                                    <?= $block->escapeHtml($_formatedOptionValue['full_view']) ?>
-                                    <?php else :?>
-                                    <?= $block->escapeHtml($_formatedOptionValue['value'], ['span', 'a']) ?>
-                                    <?php endif; ?>
+                                <?php if (isset($_formatedOptionValue['full_view'])): ?>
+                                <?= $block->escapeHtml($_formatedOptionValue['full_view'],['span', 'i']) ?>
+                                <?php else :?>
+                                <?= $block->escapeHtml($_formatedOptionValue['value'], ['span', 'a']) ?>
                                 <?php endif; ?>
-                                
                             </dd>
                         <?php endforeach; ?>
                     </dl>

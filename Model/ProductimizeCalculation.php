@@ -404,8 +404,257 @@ class ProductimizeCalculation
         $query = "SELECT * FROM treatment where treatment_sku='deck_top_bot_hf_sbox'";
         return $connection->fetchAll($query);
     }
+  public function getGlassDim($imageDim, $matDim)
+    {
+        if ($matDim > 0) {
+            return $imageDim + ($matDim - 0.50);
+            }
+        else {
+            return $imageDim;
+        }
+    }
+    public function getImageDim($glassDim, $matDim)
+    {
+        if ($matDim > 0) {
+            return $glassDim -($matDim - 0.50);
+        }
+        else {
+            return $glassDim;
+        }
+    }
+
 
     public function getSizeCalculation($selectedMediumOption, $selectedTreatmentOption)
+    {
+        $connection = $this->resourceConnection->getConnection();
+
+        $mediaTreatmentQuery = $connection->select()
+            ->from(
+                ['m' => 'media']
+            )
+            ->join(
+                ['mt' => 'media_treatment'],
+                'm.sku=mt.media_sku'
+            )
+            ->join(
+                ['t' => 'treatment'],
+                't.treatment_sku=mt.treatment_sku'
+            )
+            ->where('m.sku=?', $selectedMediumOption)
+            ->where('mt.display_to_customer=?', 1)
+            ->where('t.treatment_sku =?', $selectedTreatmentOption);
+
+        //$mediaTreatmentQuery = "SELECT m.*, t.* FROM `media_treatment` as mt INNER join `media` AS m on m.sku=mt.media_sku INNER join `treatment` as t on t.treatment_sku=mt.treatment_sku WHERE m.sku='" . $selectedMediumOption . "' AND t.treatment_sku = '" . $selectedTreatmentOption . "' AND mt.display_to_customer=1";
+        $mediaTreatItemRow = $connection->fetchRow($mediaTreatmentQuery);
+
+        if (!isset($mediaTreatItemRow)) {
+            return false;
+        }
+
+        $treatment = array(
+            "new_top_mat_size_left" => $mediaTreatItemRow["new_top_mat_size_left"],
+            "new_bottom_mat_size_left" => $mediaTreatItemRow["new_bottom_mat_size_left"],
+            "new_top_mat_size_right" => $mediaTreatItemRow["new_top_mat_size_right"],
+            "new_bottom_mat_size_right" => $mediaTreatItemRow["new_top_mat_size_top"],
+            "new_top_mat_size_top" => $mediaTreatItemRow["new_top_mat_size_top"],
+            "new_top_mat_size_bottom" => $mediaTreatItemRow["new_top_mat_size_bottom"],
+            "new_bottom_mat_size_top" => $mediaTreatItemRow["new_top_mat_size_bottom"],
+            "new_bottom_mat_size_bottom" => $mediaTreatItemRow["new_bottom_mat_size_bottom"],
+            "max_glass_size_long" => $mediaTreatItemRow["max_glass_size_long"],
+            "max_glass_size_short" => $mediaTreatItemRow["max_glass_size_short"],
+            "min_glass_size_long" => $mediaTreatItemRow["min_glass_size_long"],
+            "min_glass_size_short" => $mediaTreatItemRow["min_glass_size_short"],
+            "base_cost_treatment" => $mediaTreatItemRow["base_cost_treatment"]
+
+        );
+
+        $media = array(
+            "max_image_size_long" => $mediaTreatItemRow["max_image_size_long"],
+            "max_image_size_short" => $mediaTreatItemRow["max_image_size_short"],
+            "min_image_size_long" => $mediaTreatItemRow["min_image_size_long"],
+            "min_image_size_short" => $mediaTreatItemRow["min_image_size_short"],
+            "base_cost_media" => $mediaTreatItemRow["base_cost_media"]
+        );
+
+
+        /*
+        Determine Short and Long Side of Artwork
+        IF artwork.image_width < artwork.image_height THEN
+
+            i.     Short_Side = Width
+
+            ii.     Long_Side = Height
+
+            iii.     Orientation = Vertical
+
+        ELSE
+
+            i.     Short Side = Height
+
+            ii.     Long Side = Width
+
+            iii.     Orientation = Horizontal
+
+        */
+
+        $artwork = array(
+            "image_width" => 57,
+            "image_height" => 37,
+            "medium" => "MEDIA_PAPER_MATTE",
+            "treatment" => "TREAT_00049",
+            "top_mat_size_left" => 0,
+            "top_mat_size_right" => 0,
+            "top_mat_size_top" => 0,
+            "top_mat_size_bottom" => 0,
+            "bottom_mat_size_left" => 0,
+            "bottom_mat_size_right" => 0,
+            "bottom_mat_size_top" => 0,
+            "bottom_mat_size_bottom" => 0,
+            "max_image_height" => 50,
+            "max_image_width" => 60,
+
+
+        );
+
+
+        $Short_Side = $artwork["image_height"];
+        $Long_Side = $artwork["image_width"];
+        $Orientation = "Horizontal";
+
+
+        $Mat_Left = max($treatment["new_top_mat_size_left"], $treatment["new_bottom_mat_size_left"]);
+        $Mat_Right = max($treatment["new_top_mat_size_right"], $treatment["new_bottom_mat_size_right"]);
+        $Mat_Top = max($treatment["new_top_mat_size_top"], $treatment["new_bottom_mat_size_top"]);
+        $Mat_Bottom = max($treatment["new_top_mat_size_bottom"], $treatment["new_bottom_mat_size_bottom"]);
+
+
+        if ($artwork["image_width"] < $artwork["image_height"]) {
+
+            $Short_Side = $artwork["image_width"];
+            $Long_Side = $artwork["image_height"];
+            $Orientation = "Vertical";
+        }
+
+        if ($selectedMediumOption = $artwork['medium'] AND $selectedTreatmentOption = $artwork['treatment']) {
+
+            $Mat_Left = max($artwork["top_mat_size_left"], $artwork["bottom_mat_size_left"]);
+            $Mat_Right = max($artwork["top_mat_size_right"], $artwork["bottom_mat_size_right"]);
+            $Mat_Top = max($artwork["top_mat_size_top"], $artwork["bottom_mat_size_top"]);
+            $Mat_Bottom = max($artwork["top_mat_size_bottom"], $artwork["bottom_mat_size_bottom"]);
+        }
+
+        //echo " mat lef t" . $Mat_Left . "  " . $Mat_Right . "  " . $Mat_Bottom;
+
+        if ($Orientation == "Vertical") {
+
+            $matTotalLong = $Mat_Top + $Mat_Bottom;
+
+            $matTotalShort = $Mat_Left + $Mat_Right;
+        } else {
+
+            $matTotalShort = $Mat_Top + $Mat_Bottom;
+
+            $matTotalLong = $Mat_Left + $Mat_Right;
+        }
+
+        //echo " ori " . $Orientation . " Long " . $matTotalLong . " Sht " . $matTotalShort;
+        // Apply Size Filters (Get Bounds)
+        //a.      Check Product
+        if ($Orientation == "Vertical") {
+            $productGlassLong = $this->getGlassDim($artwork["max_image_height"], $matTotalLong);
+            $productGlassShort = $this->getGlassDim($artwork["max_image_width"], $matTotalShort);
+        } else {
+            $productGlassLong = $this->getGlassDim($artwork["max_image_width"], $matTotalLong);
+            $productGlassShort = $this->getGlassDim($artwork["max_image_height"], $matTotalShort);
+        }
+
+        //b. Check Media
+
+        $mediaGlassLongMax = $this->getGlassDim($media["max_image_size_long"], $matTotalLong);
+        $mediaGlassShortMax = $this->getGlassDim($media["max_image_size_short"], $matTotalShort);
+        $mediaGlassLongMin = $this->getGlassDim($media["min_image_size_long"], $matTotalLong);
+        $mediaGlassShortMin = $this->getGlassDim($media["min_image_size_short"], $matTotalShort);
+
+
+        //c.      Check Treatment
+        $treatmentGlassLongMax = $treatment["max_glass_size_long"];
+        $treatmentGlassShortMax = $treatment["max_glass_size_short"];
+        $treatmentGlassLongMin = $treatment["min_glass_size_long"];
+        $treatmentGlassShortMin = $treatment["min_glass_size_short"];
+
+        /*
+        BASE COST QUESRY STARTED HERE
+        */
+
+        // 5. Fill Size Slider Array
+        $baseCostQuery = "SELECT glass_size_long, glass_size_short FROM base_cost WHERE ";
+        $baseCostQuery .= "base_cost.base_cost_media = '" . $media['base_cost_media'] . "' AND ";
+
+        $baseCostQuery .= "base_cost.base_cost_treatment = '" . $treatment['base_cost_treatment'] . "' AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_long <= " . $productGlassLong . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_short <= " . $productGlassShort . "  AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_long <= " . $mediaGlassLongMax . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_short <=" . $mediaGlassShortMax . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_long >= " . $mediaGlassLongMin . "AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_short >= " . $mediaGlassShortMin . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_long <= " . $treatmentGlassLongMax . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_short <= " . $treatmentGlassShortMax . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_long >=  " . $treatmentGlassLongMin . " AND ";
+
+        $baseCostQuery .= "base_cost.glass_size_short >= " . $treatmentGlassShortMin;
+
+
+        // $mediaTreatmentQuery =  "SELECT m.*, t.* FROM `media_treatment` as mt INNER join `media` AS m on m.sku=mt.media_sku INNER join `treatment` as t on t.treatment_sku=mt.treatment_sku WHERE m.sku='". $selectedMediumOption."' AND t.treatment_sku = '". $selectedTreatmentOption ."' AND mt.display_to_customer=1";
+        $baseCostRecords = $connection->fetchAll($baseCostQuery);
+
+
+        //6. Apply Proportion Filter
+        $ratio = $artwork['image_height'] / $artwork['image_width'];
+
+        $minimumRatio = $ratio * 0.98;
+        $maximumRatio = $ratio * 1.02;
+
+        $finalBaseCost = array();
+
+
+        if (is_array($baseCostRecords) && !empty($baseCostRecords)) {
+            foreach ($baseCostRecords as $basecostRow) {
+               // echo json_encode($basecostRow);
+                if ($Orientation == "Vertical") {
+
+                    $baseGlassHeight = $basecostRow["glass_size_long"];
+                    $baseGlassWidth = $basecostRow["glass_size_short"];
+                    $baseImageHeight = $this->getImageDim($basecostRow["glass_size_long"], $matTotalLong);
+                    $baseImageWidth = $this->getImageDim($basecostRow["glass_size_short"], $matTotalShort);
+
+                } else {
+                    $baseGlassHeight = $basecostRow["glass_size_short"];
+                    $baseGlassWidth = $basecostRow["glass_size_long"];
+                    $baseImageHeight = $this->getImageDim($basecostRow["glass_size_short"], $matTotalShort);
+                    $baseImageWidth = $this->getImageDim($basecostRow["glass_size_long"], $matTotalLong);
+
+                }
+
+                if (($baseImageHeight / $baseImageWidth) >= $minimumRatio && ($baseImageHeight / $baseImageWidth) <= $maximumRatio) {
+                    $newSize = (int) $baseGlassWidth . '×' .  (int) $baseGlassHeight;
+                    array_push($finalBaseCost, $newSize);
+                }
+
+            }
+        }
+        return $finalBaseCost;
+    }
+
+    public function getSizeCalculationOLD($selectedMediumOption, $selectedTreatmentOption)
     {
         //start:TODO
         //get from artwork table

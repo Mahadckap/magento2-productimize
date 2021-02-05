@@ -35,7 +35,7 @@ class Editquoteupdate
         $processMode = \Magento\Catalog\Model\Product\Type\AbstractType::PROCESS_MODE_FULL
     )
     {
-        $params = $this->request->getParams();
+           $params = $this->request->getParams();
         $items = $subject->getAllItems();
         $referenURL = $this->redirect->getRefererUrl();
         $selectedCustomizedoptions = [];
@@ -45,10 +45,12 @@ class Editquoteupdate
                 if (is_array($addedParams)) {
                     if (!empty($addedParams)) {
                         foreach ($addedParams as $addedParamlabel => $addedParamValue) {
-                            $selectedCustomizedoptions[] = [
-                                'label' => $addedParamlabel,
-                                'value' => $addedParamValue
-                            ];
+                            if($addedParamlabel != 'CustomImage') {
+                                $selectedCustomizedoptions[] = [
+                                    'label' => $addedParamlabel,
+                                    'value' => $addedParamValue
+                                ];
+                            }
                         }
                     }
                 }
@@ -62,10 +64,12 @@ class Editquoteupdate
                         if (is_array($addedParams)) {
                             if (!empty($addedParams)) {
                                 foreach ($addedParams as $addedParamlabel => $addedParamValue) {
-                                    $selectedCustomizedoptions[] = [
-                                        'label' => $addedParamlabel,
-                                        'value' => $addedParamValue
-                                    ];
+                                    if($addedParamlabel != 'CustomImage') {
+                                        $selectedCustomizedoptions[] = [
+                                            'label' => $addedParamlabel,
+                                            'value' => $addedParamValue
+                                        ];
+                                    }
                                 }
                             }
                         }

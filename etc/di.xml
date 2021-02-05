@@ -11,14 +11,12 @@
     <type name="Magento\Framework\View\Result\Page">
         <plugin name="dckap_productimize_plugin_custom_layout" type="Mahadckap\Productimize\Plugin\Layout" sortOrder="1" />
     </type>
-    <!--<type name="Magento\Checkout\CustomerData\AbstractItem">
-        <plugin name="DCKAP_Productimize::Minicart_Changer" type="DCKAP\Productimize\Plugin\Minicart\Content" disabled="false"/>
+    <type name="Magento\Checkout\CustomerData\AbstractItem">
+        <plugin name="Mahadckap_Productimize::Minicart_Changer" type="Mahadckap\Productimize\Plugin\Minicart\Content" disabled="false"/>
     </type>
     <type name="Magento\Checkout\Block\Cart\Item\Renderer">
-        <plugin sortOrder="1" name="foo" type="DCKAP\Productimize\Plugin\Block\Cart\Item\RendererPlugin"/>
-    </type>-->
-
-    <!--<preference for="Magento\Quote\Model\Quote\Item" type="DCKAP\Productimize\Model\Quote\Item" />-->
+        <plugin sortOrder="1" name="foo" type="Mahadckap\Productimize\Plugin\Block\Cart\Item\RendererPlugin"/>
+    </type>
     <preference for="Magento\Wishlist\Model\Wishlist" type="Mahadckap\Productimize\Model\Rewrite\Model\Wishlist" />
     <type name="Magento\Sales\Model\Reorder\Reorder">
         <plugin sortOrder="1" name="reorder_addparams" type="Mahadckap\Productimize\Model\Rewrite\Model\Reorder\Reorder"/>
@@ -36,7 +34,4 @@
     <type name="Magento\Wishlist\Block\AbstractBlock">
         <plugin sortOrder="1" name="setwishlistediturl_forproducturl" type="Mahadckap\Productimize\Plugin\Wishlist\Block\AbstractBlock"/>
     </type>
-<!--<type name="Magento\Checkout\Block\Cart\Item\Renderer">
-        <plugin name="Change_Product_Image_In_Checkout_Cart" type="Mahadckap\Productimize\Plugin\CheckoutCart\Image" sortOrder="1"/>
-    </type>-->
 </config>

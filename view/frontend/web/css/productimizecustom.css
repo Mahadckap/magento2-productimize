@@ -1,0 +1,105 @@
+.table-wrapper.order-items .product.name.product-item-name,
+.table-wrapper.table-order-items.invoice .product.name.product-item-name {
+    margin-bottom: 2rem;
+}
+
+
+.cart.table-wrapper .product-item-name + .item-options,
+.product-item-details .item-options,
+.block-minicart dl.product.options.list {
+    display: grid;
+    grid-template-columns: auto auto;
+}
+
+.table-wrapper.order-items .productimize_added_element_container_myaccount,
+.table-wrapper.table-order-items.invoice .productimize_added_element_container_myaccount {
+    display: unset;
+}
+
+.table-wrapper.order-items .item-options,
+.table-wrapper.table-order-items.invoice .item-options {
+    display: grid;
+    grid-template-columns: auto auto;
+    order: 2;
+}
+
+.table-wrapper.order-items dd.tooltip.wrapper,
+.table-wrapper.table-order-items.invoice dd.tooltip.wrapper {
+    word-break: break-all;
+    width: 200px;
+}
+
+.tooltip.wrapper.product-item-tooltip dl {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+}
+
+.cart.table-wrapper .product-item-name + .item-options:before,
+.block-minicart dl.product.options.list:before,
+.product-item-details .item-options:before {
+    content: unset !important;
+}
+
+.table-wrapper.order-items .item-options dt,
+.table-wrapper.table-order-items.invoice .item-options dt,
+.cart.table-wrapper .product-item-name + .item-options dt,
+.block-minicart dl.product.options.list dt,
+.order-details-items .item-options dd,
+.product-item-details .item-options dt {
+    margin-bottom: 10px !important;
+    text-transform: capitalize;
+}
+
+.tooltip.wrapper.product-item-tooltip dl dt {
+    text-transform: capitalize;
+}
+
+.block-minicart dl.product.options.list,
+.product-item-details .item-options {
+    margin-top: 10px;
+}
+
+/*Tooltip*/
+.hint {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.pz-tooltip-content {
+    position: absolute;
+    bottom: 150%;
+    left: -100%;
+    box-shadow: 0px 3px 6px #00000029;
+    border: 1px solid #D8D9D7;
+    visibility: hidden;
+    color: #4C4D4F;
+    font-size: 14px;
+    border-radius: 5px;
+    z-index: 9999999999999;
+    padding: 2rem;
+    background: white;
+    min-width: 300px;
+    max-width: 300px;
+    margin-left: -90px;
+    text-align: center;
+}
+
+.pz-tooltip-content:after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: white transparent transparent transparent;
+}
+
+.hint:hover .pz-tooltip-content {
+    visibility: visible;
+}
+
+
+

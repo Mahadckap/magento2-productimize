@@ -15,7 +15,9 @@ var config = {
             TWEEN: 'https://devcloud.productimize.com/Promize3d/libraries/Tween.js',
             customisedOptions: 'Mahadckap_Productimize/js/customise-options',
             selectric:'Mahadckap_Productimize/js/selectric',
-            owlCarousel:'Mahadckap_Productimize/js/owl.carousel'
+            owlCarousel:'Mahadckap_Productimize/js/owl.carousel',
+            'Magento_Checkout/template/minicart/item/default.html': 'Mahadckap_Productimize/template/minicart/item/default.html',
+            'Magento_Checkout/template/summary/item/details.html': 'Mahadckap_Productimize/template/summary/item/details.html'
         }
     },
     paths: {
