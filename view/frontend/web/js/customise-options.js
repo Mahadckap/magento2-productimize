@@ -54,7 +54,7 @@ define([
             var defaultConfigJson = JSON.parse(default_config);
             var mediaDefault = defaultConfigJson.medium_default_sku;
             var product_level = $(this.options.productLevel).val();
-            product_level = (product_level) ? product_level : 0;
+            product_level = (product_level) ? product_level : 1;
             var treatDefault = defaultConfigJson.treatment_default_sku;
             var matsLiner = ['topmat', 'bottommat', 'liner'];
             var configlevel4 = ['frame', 'liner'];
@@ -203,7 +203,7 @@ define([
                 }
             });
             $('body').on("change", ".pz-medium .medium-select-elem", function () {
-               
+
                 $(self.options.sizeLabelDiv).html(" ");
                 $(self.options.preSizeLabelDiv).html("");
                 $(self.options.sizeOuterLabelDiv).html("");
@@ -226,24 +226,25 @@ define([
                 var returnedData = $(self.options.apiReturnData).val();
                 var customizer_api_data = JSON.parse(returnedData);
                 //$.each(customizer_api_data, function (key, data) {
-                    //if (key == selectedMedia) {
+                //if (key == selectedMedia) {
                 if (customizer_api_data && Object.keys(customizer_api_data).length > 0 && selectedMedia in customizer_api_data) {
-                        var data = customizer_api_data[selectedMedia];
-                        $.each(data['treatment'], function (trkey, trdata) {
-                            if (trdata['display_to_customer']) {
-                                treatArr.push(trkey);
-                                treathtml += '<option data-sku="' + trkey + '" value="' + trkey + '" class="option">' + trdata['display_name'] + '</option>';
-                            }
-                        });
-                        // else if(treatDefault != 'undefined') {
-                        //     console.log('inside elseif');
-                        //     var html = '<option selected data-sku="'+treatDefault+'" value="'+treatDefault+'" class="option">'+treatDefault+'</option>';
-                        //     $('.pz-medium select.treatment-select-elem').append(html);
-                        // }
-                        ///return true;
-                    }
+                    var data = customizer_api_data[selectedMedia];
+                    $.each(data['treatment'], function (trkey, trdata) {
+                        if (trdata['display_to_customer']) {
+                            treatArr.push(trkey);
+                            treathtml += '<option data-sku="' + trkey + '" value="' + trkey + '" class="option">' + trdata['display_name'] + '</option>';
+                        }
+                    });
+                    // else if(treatDefault != 'undefined') {
+                    //     console.log('inside elseif');
+                    //     var html = '<option selected data-sku="'+treatDefault+'" value="'+treatDefault+'" class="option">'+treatDefault+'</option>';
+                    //     $('.pz-medium select.treatment-select-elem').append(html);
+                    // }
+                    ///return true;
+                }
                 //});
                 $('.pz_treatment select.treatment-select-elem').html(treathtml);
+                console.log("product_level ", product_level)
                 if (product_level != 1) {
                     if ($.inArray(treatDefault, treatArr) !== -1) {
                         $('.pz_treatment select.treatment-select-elem').val(treatDefault).trigger('change');
@@ -531,176 +532,185 @@ define([
         },
 
         checkTopMatCondition: function () {
-            console.log("topmat");
             var configLevel, isDefaultTopMat = 0, requireTopMatForTreatment, selectedMediumOption,
-                selectedTreatmentOption, returnedData, defaultConfig;
+                selectedTreatmentOption, returnedData, defaultConfig, isDefaultMat, isDefaultBottomMat = 0,
+                glassDimention, artworkData, width, height, isDefaultTopMatSku, isDefaultBottomMatSku;
 
             configLevel = $('#pz_platform_product_level').val();
-            selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
-            selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-
             returnedData = JSON.parse($(this.options.apiReturnData).val());
             selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
             selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
             requireTopMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_top_mat']);
 
             defaultConfig = JSON.parse($('#pz_magento_default_options').val());
+            artworkData = this.getArtworkData();
+            glassDimention = getGlassDimention(artworkData);
+            width = glassDimention[0];
+            height = glassDimention[1];
             $.each(defaultConfig, function (key, data) {
                 if (key == 'top_mat_default_sku' && data) {
                     isDefaultTopMat = 1;
+                    isDefaultTopMatSku = data;
                     return false;
                 }
             });
 
-            if (configLevel <= 4) {
-                if (selectedMediumOption && selectedTreatmentOption) {
-                    if (this.hasChangedMediaTreatment()) {
-                        console.log('1ifcond');
-                        console.log(requireTopMatForTreatment);
-                        if (requireTopMatForTreatment) {
-                            console.log('req');
-                            this.getFirstMatCondition('topmat');
-                        } else {
-                            console.log('req else');
-                            //disable topmat
-                            this.callMatRightContent([], 'topmat');
-                        }
-                    } else {
-                        console.log("default op");
-                        if (isDefaultTopMat) {
-                            console.log("have default op");
-                            this.getFirstMatCondition('topmat');
-                        } else {
-                            console.log('have default op else');
-                            //disable topmat
-                            this.callMatRightContent([], 'topmat');
-                        }
-                    }
-                } else {
-                    //disable topmat
-                    this.callMatRightContent([], 'topmat');
+            $.each(defaultConfig, function (key, data) {
+                if (key == 'bottom_mat_default_sku' && data) {
+                    isDefaultBottomMat = 1;
+                    isDefaultBottomMatSku = data;
+                    return false;
                 }
-            }
+            });
+
+
+            var payload = {
+                'config_level': configLevel,
+                'selected_medium': selectedMediumOption,
+                'selected_treatment': selectedTreatmentOption,
+                'require_topmat_for_treatment': requireTopMatForTreatment,
+                'has_changed_medium_treatment': this.hasChangedMediaTreatment(),
+                'has_changed_size_frame': this.hasChangedSizeFrame(),
+                'is_default_topmat': isDefaultTopMat,
+                'is_default_bottommat': isDefaultBottomMat,
+                'is_default_bottommat_sku': isDefaultBottomMatSku,
+                'is_default_topmat_sku': isDefaultTopMatSku,
+                'width': width,
+                'height': height
+            };
+            this.getAjaxDetails(payload, 'topmat');
+
         },
 
         checkBottomMatCondition: function () {
-            console.log("botmat");
-            var configLevel, isDefaultBottomMat = 0, requireBottomMatForTreatment, selectedMediumOption,
-                selectedTreatmentOption, returnedData, defaultConfig;
+            var configLevel, isDefaultTopMat = 0, requireBottomMatForTreatment, selectedMediumOption,
+                selectedTreatmentOption, returnedData, defaultConfig, isDefaultMat, isDefaultBottomMat = 0,
+                glassDimention, artworkData, width, height, isDefaultTopMatSku, isDefaultBottomMatSku;
 
             configLevel = $('#pz_platform_product_level').val();
+            returnedData = JSON.parse($(this.options.apiReturnData).val());
             selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
             selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+            requireBottomMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_top_mat']);
+
+            defaultConfig = JSON.parse($('#pz_magento_default_options').val());
+            artworkData = this.getArtworkData();
+            glassDimention = getGlassDimention(artworkData);
+            width = glassDimention[0];
+            height = glassDimention[1];
+            $.each(defaultConfig, function (key, data) {
+                if (key == 'top_mat_default_sku' && data) {
+                    isDefaultTopMat = 1;
+                    isDefaultTopMatSku = data;
+                    return false;
+                }
+            });
+
+            $.each(defaultConfig, function (key, data) {
+                if (key == 'bottom_mat_default_sku' && data) {
+                    isDefaultBottomMat = 1;
+                    isDefaultBottomMatSku = data;
+                    return false;
+                }
+            });
+
+
+            var payload = {
+                'config_level': configLevel,
+                'selected_medium': selectedMediumOption,
+                'selected_treatment': selectedTreatmentOption,
+                'require_bottommat_for_treatment': requireBottomMatForTreatment,
+                'has_changed_medium_treatment': this.hasChangedMediaTreatment(),
+                'has_changed_size_frame': this.hasChangedSizeFrame(),
+                'is_default_topmat': isDefaultTopMat,
+                'is_default_bottommat': isDefaultBottomMat,
+                'is_default_topmat_sku': isDefaultTopMatSku,
+                'is_default_bottommat_sku': isDefaultBottomMatSku,
+                'width': width,
+                'height': height
+            };
+            this.getAjaxDetails(payload, 'bottommat');
+
+        },
+
+        checkLinerCondition: function () { console.log("liner");
+            var configLevel, isDefaultLiner = 0, requireLinerForTreatment, frameType, selectedMediumOption,
+                selectedTreatmentOption, selectedFrameSku, returnedFrameData, returnedData, defaultConfig,
+                frameRabbetDepth, minRabbetDepth, linerRabbetDepthCheck, defaultLinerSku = '';
+
+            configLevel = $('#pz_platform_product_level').val();
+            returnedFrameData = JSON.parse($(this.options.mageFrameData).val());
+            selectedFrameSku = $(this.options.frameOptionDiv).find('.pz-design-item.selectedFrame').attr('data-sku');
+            if (selectedFrameSku && returnedFrameData[selectedFrameSku]) {
+                frameType = returnedFrameData[selectedFrameSku]['m_frame_type'];
+                frameRabbetDepth = returnedFrameData[selectedFrameSku]['m_frame_rabbet_depth'];
+                frameType = frameType.toLowerCase();
+            }
 
             returnedData = JSON.parse($(this.options.apiReturnData).val());
             selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
             selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
-            requireBottomMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_bottom_mat']);
+            requireLinerForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_liner']);
+            minRabbetDepth = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['min_rabbet_depth']);
+            linerRabbetDepthCheck = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['liner_rabbet_depth_check']);
 
             defaultConfig = JSON.parse($('#pz_magento_default_options').val());
             $.each(defaultConfig, function (key, data) {
-                if (key == 'bottom_mat_default_sku' && data) {
-                    isDefaultBottomMat = 1;
-                    return false;
-                }
-            });
-
-            if (configLevel <= 4) {
-                if (selectedMediumOption && selectedTreatmentOption) {
-                    if (this.hasChangedMediaTreatment()) {
-                        console.log('1ifcond');
-                        if (requireBottomMatForTreatment) {
-                            console.log('req');
-                            this.getFirstMatCondition('bottommat');
-                        } else {
-                            //disable bottommat
-                            this.callMatRightContent([], 'bottommat');
-                        }
-                    } else {
-                        console.log("default op");
-                        if (isDefaultBottomMat) {
-                            console.log("have default op");
-                            this.getFirstMatCondition('bottommat');
-                        } else {
-                            //disable bottommat
-                            this.callMatRightContent([], 'bottommat');
-                        }
-                    }
-                } else {
-                    //disable bottommat
-                    this.callMatRightContent([], 'bottommat');
-                }
-            }
-        },
-
-        getFirstMatCondition: function (matTypeOption) {
-            console.log("getFirstMatCondition");
-            var isDefaultMat, isDefaultTopMat = 0, isDefaultBottomMat = 0, glassDimention, artworkData, width, height,
-                defaultConfig;
-
-            defaultConfig = JSON.parse($('#pz_magento_default_options').val());
-            artworkData = this.getArtworkData();
-            glassDimention = getGlassDimention(artworkData);
-            width = glassDimention[0];
-            height = glassDimention[1];
-            console.log("glassDimention");
-            console.log(glassDimention);
-
-            $.each(defaultConfig, function (key, data) {
-                if (key == 'top_mat_default_sku' && data) {
-                    isDefaultTopMat = 1;
+                if (key == 'liner_default_sku' && data) {
+                    isDefaultLiner = 1;
                     return false;
                 }
             });
 
             $.each(defaultConfig, function (key, data) {
-                if (key == 'bottom_mat_default_sku' && data) {
-                    isDefaultBottomMat = 1;
+                if (key == 'liner_default_sku') {
+                    defaultLinerSku = data;
                     return false;
                 }
             });
 
+            var payload = {
+                'config_level': configLevel,
+                'selected_medium': selectedMediumOption,
+                'selected_treatment': selectedTreatmentOption,
+                'frame_type': frameType,
+                'selected_frame_sku': selectedFrameSku,
+                'require_liner_for_treatment': requireLinerForTreatment,
+                'has_changed_medium_treatment': this.hasChangedMediaTreatment(),
+                'has_changed_size_frame': this.hasChangedSizeFrame(),
+                'is_default_liner': isDefaultLiner,
+                'frame_rabbet_depth': frameRabbetDepth,
+                'min_rabbet_depth': minRabbetDepth,
+                'liner_rabbet_depth_check': linerRabbetDepthCheck,
+                'default_liner_sku': defaultLinerSku
+            };
 
-            isDefaultMat = (matTypeOption == 'topmat') ? isDefaultTopMat : isDefaultBottomMat;
-
-            if (width > 40 && height > 60) {
-                console.log('1condition');
-                //display default mat with no op to select
-                this.getMatArray('default', matTypeOption);
-            } else {
-                if (this.hasChangedMediaTreatment() || this.hasChangedSizeFrame()) {
-                    console.log('1con elas if');
-                    this.getSecondMatCondition(matTypeOption);
-                } else {
-                    if (isDefaultMat) {
-                        console.log('1con elas esle if');
-                        //display default mat
-                        this.getMatArray('default', matTypeOption);
-                    } else {
-                        console.log('1con elas esle else if');
-                        this.getSecondMatCondition(matTypeOption);
-                    }
-                }
-            }
-
+            this.getAjaxDetails(payload, 'liner');
         },
 
-        getSecondMatCondition: function (matTypeOption) {
-            console.log("getSecondMatCondition");
-            var glassDimention, width, height, artworkData;
-
-            artworkData = this.getArtworkData();
-            glassDimention = getGlassDimention(artworkData);
-            width = glassDimention[0];
-            height = glassDimention[1];
-
-            if (width > 32 && height > 40) {
-                console.log("over");
-                this.getMatArray('oversized', matTypeOption);
-            } else {
-                console.log("stand");
-                this.getMatArray('standard', matTypeOption);
-            }
+        getAjaxDetails: function (payload, type){
+            console.log("ajaxli");
+            var self = this;
+            var responseArray = [];
+            $.ajax({
+                url: BASE_URL + this.options.customiseUrl,
+                type: "POST",
+                datatype: "json",
+                showLoader: true,
+                data: {payload, type:type},
+                success: function (response) {
+                    // responseArray = response['content'];
+                    console.log(response);
+                    if (type == 'liner') {  console.log("hu", type);
+                        self.callLinerRightContent(response['content']);
+                    } else if(type == 'topmat' || type == 'bottommat') { console.log("type", type);
+                        self.callMatRightContent(response['content'], type);
+                    }
+                },
+                error: function (err) {
+                    // console.log(err['info']);
+                }
+            });
         },
 
         getArtworkData: function () {
@@ -799,7 +809,180 @@ define([
             return [glassWidth, glassHeight];
         },
 
-        getMatArray: function (type, matTypeOption) {
+        /* checkTopMatCondition: function () {
+           console.log("topmat");
+           var configLevel, isDefaultTopMat = 0, requireTopMatForTreatment, selectedMediumOption,
+               selectedTreatmentOption, returnedData, defaultConfig;
+
+           configLevel = $('#pz_platform_product_level').val();
+           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
+           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+
+           returnedData = JSON.parse($(this.options.apiReturnData).val());
+           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
+           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+           requireTopMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_top_mat']);
+
+           defaultConfig = JSON.parse($('#pz_magento_default_options').val());
+           $.each(defaultConfig, function (key, data) {
+               if (key == 'top_mat_default_sku' && data) {
+                   isDefaultTopMat = 1;
+                   return false;
+               }
+           });
+
+           if (configLevel <= 4) {
+               if (selectedMediumOption && selectedTreatmentOption) {
+                   if (this.hasChangedMediaTreatment()) {
+                       console.log('1ifcond');
+                       console.log(requireTopMatForTreatment);
+                       if (requireTopMatForTreatment) {
+                           console.log('req');
+                           this.getFirstMatCondition('topmat');
+                       } else {
+                           console.log('req else');
+                           //disable topmat
+                           this.callMatRightContent([], 'topmat');
+                       }
+                   } else {
+                       console.log("default op");
+                       if (isDefaultTopMat) {
+                           console.log("have default op");
+                           this.getFirstMatCondition('topmat');
+                       } else {
+                           console.log('have default op else');
+                           //disable topmat
+                           this.callMatRightContent([], 'topmat');
+                       }
+                   }
+               } else {
+                   //disable topmat
+                   this.callMatRightContent([], 'topmat');
+               }
+           }
+       },
+
+       checkBottomMatCondition: function () {
+           console.log("botmat");
+           var configLevel, isDefaultBottomMat = 0, requireBottomMatForTreatment, selectedMediumOption,
+               selectedTreatmentOption, returnedData, defaultConfig;
+
+           configLevel = $('#pz_platform_product_level').val();
+           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
+           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+
+           returnedData = JSON.parse($(this.options.apiReturnData).val());
+           selectedMediumOption = $(this.options.mediumOptionDiv).find(".medium-select-elem option:selected").val();
+           selectedTreatmentOption = $(this.options.mediumOptionDiv).find(".treatment-select-elem option:selected").val();
+           requireBottomMatForTreatment = parseFloat(returnedData[selectedMediumOption]['treatment'][selectedTreatmentOption]['requires_bottom_mat']);
+
+           defaultConfig = JSON.parse($('#pz_magento_default_options').val());
+           $.each(defaultConfig, function (key, data) {
+               if (key == 'bottom_mat_default_sku' && data) {
+                   isDefaultBottomMat = 1;
+                   return false;
+               }
+           });
+
+           if (configLevel <= 4) {
+               if (selectedMediumOption && selectedTreatmentOption) {
+                   if (this.hasChangedMediaTreatment()) {
+                       console.log('1ifcond');
+                       if (requireBottomMatForTreatment) {
+                           console.log('req');
+                           this.getFirstMatCondition('bottommat');
+                       } else {
+                           //disable bottommat
+                           this.callMatRightContent([], 'bottommat');
+                       }
+                   } else {
+                       console.log("default op");
+                       if (isDefaultBottomMat) {
+                           console.log("have default op");
+                           this.getFirstMatCondition('bottommat');
+                       } else {
+                           //disable bottommat
+                           this.callMatRightContent([], 'bottommat');
+                       }
+                   }
+               } else {
+                   //disable bottommat
+                   this.callMatRightContent([], 'bottommat');
+               }
+           }
+       },
+
+       getFirstMatCondition: function (matTypeOption) {
+           console.log("getFirstMatCondition");
+           var isDefaultMat, isDefaultTopMat = 0, isDefaultBottomMat = 0, glassDimention, artworkData, width, height,
+               defaultConfig;
+
+           defaultConfig = JSON.parse($('#pz_magento_default_options').val());
+           artworkData = this.getArtworkData();
+           glassDimention = getGlassDimention(artworkData);
+           width = glassDimention[0];
+           height = glassDimention[1];
+           console.log("glassDimention");
+           console.log(glassDimention);
+
+           $.each(defaultConfig, function (key, data) {
+               if (key == 'top_mat_default_sku' && data) {
+                   isDefaultTopMat = 1;
+                   return false;
+               }
+           });
+
+           $.each(defaultConfig, function (key, data) {
+               if (key == 'bottom_mat_default_sku' && data) {
+                   isDefaultBottomMat = 1;
+                   return false;
+               }
+           });
+
+
+           isDefaultMat = (matTypeOption == 'topmat') ? isDefaultTopMat : isDefaultBottomMat;
+
+           if (width > 40 && height > 60) {
+               console.log('1condition');
+               //display default mat with no op to select
+               this.getMatArray('default', matTypeOption);
+           } else {
+               if (this.hasChangedMediaTreatment() || this.hasChangedSizeFrame()) {
+                   console.log('1con elas if');
+                   this.getSecondMatCondition(matTypeOption);
+               } else {
+                   if (isDefaultMat) {
+                       console.log('1con elas esle if');
+                       //display default mat
+                       this.getMatArray('default', matTypeOption);
+                   } else {
+                       console.log('1con elas esle else if');
+                       this.getSecondMatCondition(matTypeOption);
+                   }
+               }
+           }
+
+       },
+
+       getSecondMatCondition: function (matTypeOption) {
+           console.log("getSecondMatCondition");
+           var glassDimention, width, height, artworkData;
+
+           artworkData = this.getArtworkData();
+           glassDimention = getGlassDimention(artworkData);
+           width = glassDimention[0];
+           height = glassDimention[1];
+
+           if (width > 32 && height > 40) {
+               console.log("over");
+               this.getMatArray('oversized', matTypeOption);
+           } else {
+               console.log("stand");
+               this.getMatArray('standard', matTypeOption);
+           }
+       },*/
+
+        /*getMatArray: function (type, matTypeOption) {
             type = type.trim();
             console.log("getMatArray");
             var i = 0, matArray = [], defaultConfig, defaultMatSku;
@@ -869,9 +1052,9 @@ define([
 
             console.log(matArray);
             this.callMatRightContent(matArray, matTypeOption);
-        },
+        },*/
 
-        checkLinerCondition: function () {
+        /*checkLinerCondition: function () {
             console.log("checkLinerCondition");
 
             var configLevel, isDefaultLiner = 0, requireLinerForTreatment, frameType, selectedMediumOption,
@@ -1026,7 +1209,7 @@ define([
 
             console.log(linerArray);
             this.callLinerRightContent(linerArray);
-        },
+        },*/
 
         callFrameRightContent: function (size) {
             var self = this, selectedMedia, selectedTreatment, returnedData, returnedFrameData;
@@ -1166,30 +1349,30 @@ define([
             $('.pz-optionwidthsearch ul').html(widthLi);
             $('.pz-frame').find('.pz-optiontypesearch ul').html(typeLi);
 
-            if($('.frameli').find('li').length > 0) {
-                $('.frameli').owlCarousel('destroy');
-                $('.frameli').owlCarousel({
-                    loop: false,
-                    margin: 10,
-                    nav: true,
-                    navText: [
-            '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
-            '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
-        ],
-                    responsive: {
-                        0: {
-                            items: 1
-                        },
-                        600: {
-                            items: 3
-                        },
-                        1000: {
-                            items: 5
-                        }
-                    }
-                });
-        }
-            this.checkLinerCondition();
+            // if($('.frameli').find('li').length > 0) {
+            //     $('.frameli').owlCarousel('destroy');
+            //     $('.frameli').owlCarousel({
+            //         loop: false,
+            //         margin: 10,
+            //         nav: true,
+            //         navText: [
+            //             '<i class="fa fa-chevron-left" aria-hidden="true"></i>',
+            //             '<i class="fa fa-chevron-right" aria-hidden="true"></i>'
+            //         ],
+            //         responsive: {
+            //             0: {
+            //                 items: 1
+            //             },
+            //             600: {
+            //                 items: 3
+            //             },
+            //             1000: {
+            //                 items: 5
+            //             }
+            //         }
+            //     });
+            // }
+            // this.checkLinerCondition();
 
         },
         callLinerRightContent: function (linerArray) {
@@ -1358,13 +1541,13 @@ define([
             let typearray = [];
 
             var requiresMat = (matTypeOption == 'topmat') ?  requiresTopMat : requiresBotMat;
-            if( (matTypeOption == "topMat" && parseInt(requiresTopMat) !=0) || (matTypeOption != "topMat" && parseInt(requiresBotMat) !=0)) {
+            if( (matTypeOption == "topmat" && parseInt(requiresTopMat) !=0) || (matTypeOption != "bottommat" && parseInt(requiresBotMat) !=0)) {
                 mediaframehtml = '';
                 $.each(returnedFrameData, function (framekey, framedata) {
                     console.log(framedata);
                     console.log(framedata['m_mat_type']);
                     console.log(frameTypesAllowed);
-                    if ($.inArray(framedata['m_mat_type'], frameTypesAllowed) !== -1) {
+                    if ($.inArray(framedata['m_mat_type'].toLowerCase(), frameTypesAllowed) !== -1) {
                         //if(parseFloat(framedata['m_mat_rabbet_depth']) >= parseFloat(returnedData[selectedMedia]['treatment'][selectedTreatment]['min_rabbet_depth'])) {
                         // if($.inArray( framedata['m_mat_width'], widthdata ) == -1)   {
                         //     console.log(framedata)
@@ -1430,24 +1613,30 @@ define([
             });
             console.log("Line 1340");
             console.log(mediaframehtml);
-            if (matTypeOption == "topmat") {
-                $('.topmatli').html(mediaframehtml);
+            console.log(requiresTopMat);
+            console.log(requiresBotMat);
+
+            if (matTypeOption == "topmat") {console.log("elseif");
+                $('.topmatli').html("");
+                if(parseInt(requiresTopMat) == 0) { console.log("elseif if");
+                    $('.topmatli').html(nomathtml);
+                } else {
+                    $('.topmatli').html(mediaframehtml);
+                }
                 $('.pz-top-mat .colorlist').html(colorlist);
                 $('.pz-top-mat').find('.pz-optiontypesearch ul').html(typeLi);
             }
-            else if (matTypeOption == "bottommat") {
-                $('.bottommatli').html(mediaframehtml);
+            else if (matTypeOption == "bottommat") { console.log("elseif");
+                $('.bottommatli').html("");
+                if(parseInt(requiresBotMat) == 0) { console.log("elseif if");
+                    $('.bottommatli').html(nomathtml);
+                } else {
+                    $('.bottommatli').html(mediaframehtml);
+                }
                 $('.pz-bottom-mat .colorlist').html(colorlistbot);
                 $('.pz-bottom-mat').find('.pz-optiontypesearch ul').html(typeLi);
             }
-            $('.topmatli').html(nomathtml);
-            $('.bottommatli').html(nomathtml);
-            if(parseInt(requiresTopMat) !=0) {
-                $('.topmatli').html(mediaframehtml);
-            }
-            if(parseInt(requiresBotMat) !=0) {
-                $('.bottommatli').html(mediaframehtml);
-            }
+
 
             //         $('.linerli').owlCarousel('destroy');
             //         $('.linerli').owlCarousel({

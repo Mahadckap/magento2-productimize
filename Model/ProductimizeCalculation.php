@@ -3,6 +3,10 @@
 namespace Mahadckap\Productimize\Model;
 
 use Magento\Framework\App\ResourceConnection;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Set\CollectionFactory as EavCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory;
+use Magento\Eav\Model\Config;
 
 class ProductimizeCalculation
 {
@@ -11,11 +15,380 @@ class ProductimizeCalculation
      */
     protected $resourceConnection;
 
+    protected $productFactory;
+    protected $productCollectionFactory;
+    protected $eavCollectionFactory;
+    protected $eavConfig;
+
     public function __construct(
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        ProductFactory $productFactory,
+        CollectionFactory $productCollectionFactory,
+        EavCollectionFactory $eavCollectionFactory,
+        Config $eavConfig
     )
     {
         $this->resourceConnection = $resourceConnection;
+        $this->productFactory = $productFactory;
+        $this->productCollectionFactory = $productCollectionFactory;
+        $this->eavCollectionFactory = $eavCollectionFactory;
+        $this->eavConfig = $eavConfig;
+    }
+
+    public function getTopMatCalculation($topMatParams)
+    {
+        $configLevel = $topMatParams['config_level'];
+        $selectedMediumOption = $topMatParams['selected_medium'];
+        $selectedTreatmentOption = $topMatParams['selected_treatment'];
+        $hasChangedMediaTreatment = $topMatParams['has_changed_medium_treatment'];
+        $requireTopMatForTreatment = $topMatParams['require_topmat_for_treatment'];
+        $isDefaultTopMat = $topMatParams['is_default_topmat'];
+
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('topmat');
+
+        $logger->info(print_r($topMatParams, true));
+
+        if ($configLevel <= 4) {
+            if ($selectedMediumOption && $selectedTreatmentOption) {
+                if ($hasChangedMediaTreatment) { $logger->info('hasChangedMediaTreatment');
+                    if ($requireTopMatForTreatment) {$logger->info('requireTopMatForTreatment');
+                        return $this->getFirstMatCondition('topmat', $topMatParams);
+                    } else {$logger->info('requireTopMatForTreatment else');
+                        //disable topmat
+                        return [];
+                    }
+                } else { $logger->info('default');
+                    if ($isDefaultTopMat) { $logger->info('isDefaultTopMat');
+                        return $this->getFirstMatCondition('topmat', $topMatParams);
+                    } else { $logger->info("isDefaultTopMat else");
+                        //disable topmat
+                        return [];
+                    }
+                }
+            } else {//disable topmat
+                return [];
+            }
+        }
+    }
+
+    public function getBottomMatCalculation($bottomMatParams)
+    {
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('bottommat');
+        $logger->info(print_r($bottomMatParams, true));
+
+        $configLevel = $bottomMatParams['config_level'];
+        $selectedMediumOption = $bottomMatParams['selected_medium'];
+        $selectedTreatmentOption = $bottomMatParams['selected_treatment'];
+        $hasChangedMediaTreatment = $bottomMatParams['has_changed_medium_treatment'];
+        $requireBottomMatForTreatment = $bottomMatParams['require_bottommat_for_treatment'];
+        $isDefaultBottomMat = $bottomMatParams['is_default_bottommat'];
+
+        if ($configLevel <= 4) {
+            if ($selectedMediumOption && $selectedTreatmentOption) {
+                if ($hasChangedMediaTreatment) { $logger->info('hasChangedMediaTreatment');
+                    if ($requireBottomMatForTreatment) { $logger->info('requirebottomMatForTreatment');
+                        return $this->getFirstMatCondition('bottommat', $bottomMatParams);
+                    } else { $logger->info('requirebottomMatForTreatment else');
+                        //disable bottommat
+                        return [];
+                    }
+                } else { $logger->info('default');
+                    if ($isDefaultBottomMat) { $logger->info('isDefaultbottomMat');
+                        return $this->getFirstMatCondition('bottommat', $bottomMatParams);
+                    } else { $logger->info("isDefaultBottomMat else");
+                        //disable bottommat
+                        return [];
+                    }
+                }
+            } else {//disable bottommat
+                return [];
+            }
+        }
+    }
+
+    public function getFirstMatCondition($matTypeOption, $matParams)
+    {
+        $hasChangedMediaTreatment = $matParams['has_changed_medium_treatment'];
+        $hasChangedSizeFrame = $matParams['has_changed_size_frame'];
+        $isDefaultTopMat = $matParams['is_default_topmat'];
+        $isDefaultBottomMat = $matParams['is_default_bottommat'];
+        $width = $matParams['width'];
+        $height = $matParams['height'];
+
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('getFirstMatCondition');
+
+        $isDefaultMat = ($matTypeOption == 'topmat') ? $isDefaultTopMat : $isDefaultBottomMat;
+
+        $logger->info($isDefaultMat);
+
+        if ($width > 40 && $height > 60) { $logger->info("1 if");
+            //display default mat with no op to select
+            return $this->getMatArray('default', $matTypeOption, $matParams);
+        } else { $logger->info("1 else");
+            if ($hasChangedMediaTreatment || $hasChangedSizeFrame) { $logger->info("1 else if");
+                return $this->getSecondMatCondition($matTypeOption, $matParams);
+            } else { $logger->info("1 else else");
+                if ($isDefaultMat) { $logger->info("1 else else if");
+                    //display default mat
+                    return $this->getMatArray('default', $matTypeOption, $matParams);
+                } else { $logger->info("1 else else else");
+                    return $this->getSecondMatCondition($matTypeOption, $matParams);
+                }
+            }
+        }
+
+    }
+
+    public function getSecondMatCondition($matTypeOption, $matParams)
+    {
+        $width = $matParams['width'];
+        $height = $matParams['height'];
+
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('getSecondMatCondition');
+
+        if ($width > 32 && $height > 40) { $logger->info('2 if');
+            return $this->getMatArray('oversized', $matTypeOption, $matParams);
+        } else { $logger->info('2 else');
+            return $this->getMatArray('standard', $matTypeOption, $matParams);
+        }
+    }
+
+    public function getMatArray($type, $matTypeOption, $matParams)
+    {
+        $matArray = [];
+        $type = trim($type);
+        $isDefaultMatArray = false;
+
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('getMatArray');
+
+        $isDefaultTopMatSku = $matParams['is_default_topmat_sku'];
+        $isDefaultBottomMatSku = $matParams['is_default_bottommat_sku'];
+        $defaultMatSku = ($matTypeOption == 'topmat') ? $isDefaultTopMatSku : $isDefaultBottomMatSku;
+        //$matData = Array(["sku" => 'B97', "mat_type" => 'oversized'], ["sku" => 'B8-97', "mat_type" => 'standard'], ["sku" => 'B98', "mat_type" => 'standard']);
+        $matData = $this->getMatCollection();
+
+        foreach ($matData as $key => $data) {
+
+            $matType = trim($data['m_mat_type']);
+            if (strtolower($matType) == $type) {
+                $matArray[] = $data;
+            }
+
+            if ($type == 'default' && $defaultMatSku == trim($data['m_sku'])) {
+                $matArray = [];
+                $matArray = $data;
+                $isDefaultMatArray = true;
+                $logger->info("if");
+               // $logger->info(print_r($matArray, true));
+                return $matArray;
+            }
+        }
+
+        if($type == 'default' && !$isDefaultMatArray){  $logger->info("empty");
+            return [];
+        }
+
+       // $logger->info(print_r($matArray, true));
+        return $matArray;
+    }
+
+    public function getLinerCalculation($linerParams)
+    {
+        $configLevel = $linerParams['config_level'];
+        $selectedMediumOption = $linerParams['selected_medium'];
+        $selectedTreatmentOption = $linerParams['selected_treatment'];
+        $selectedFrameSku = $linerParams['selected_frame_sku'];
+        $hasChangedMediaTreatment = $linerParams['has_changed_medium_treatment'];
+        $hasChangedSizeFrame = $linerParams['has_changed_size_frame'];
+        $requireLinerForTreatment = $linerParams['require_liner_for_treatment'];
+        $frameType = $linerParams['frame_type'];
+        $frameType = strtolower($frameType);
+        $isDefaultLiner = $linerParams['is_default_liner'];
+        $frameRabbetDepth = $linerParams['frame_rabbet_depth'];
+        $minRabbetDepth = $linerParams['min_rabbet_depth'];
+        $linerRabbetDepthCheck = $linerParams['liner_rabbet_depth_check'];
+        $defaultLinerSku = $linerParams['default_liner_sku'];
+
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('start');
+
+        $logger->info(print_r($linerParams, true));
+
+        if ($configLevel < 4) {
+            if ($selectedMediumOption && $selectedTreatmentOption && $selectedFrameSku != "No Frame") {
+                if ($hasChangedMediaTreatment) {
+                    if ($requireLinerForTreatment && $frameType == 'standard') { $logger->info("change pass");
+                        return $this->getLinerArray('custom', $linerRabbetDepthCheck, $minRabbetDepth, $frameRabbetDepth, $defaultLinerSku);
+                    } else { $logger->info("change fail");
+                        //disable liner
+                        return [];
+                    }
+                } else {
+                    $logger->info("nochange ");
+                    if ($isDefaultLiner) {  $logger->info("isDefaultLiner ");
+                        if ($hasChangedSizeFrame) { $logger->info("sizechange ");
+                            $logger->info($frameType);
+                            if ($frameType == 'standard') { $logger->info(" select");
+                                return $this->getLinerArray('custom', $linerRabbetDepthCheck, $minRabbetDepth, $frameRabbetDepth, $defaultLinerSku);
+                            } else { $logger->info("nosizechange ");
+                                //disable liner
+                                return [];
+                            }
+                        } else { $logger->info("no size change");
+                            //show default liner
+                            return $this->getLinerArray('default', $linerRabbetDepthCheck, $minRabbetDepth, $frameRabbetDepth, $defaultLinerSku);
+                        }
+                    } else { $logger->info("no isDefaultLiner");
+                        //disable liner
+                        return [];
+                    }
+                }
+            } else { $logger->info("undefined");
+                //disable liner
+                return [];
+            }
+        } else { $logger->info("undefined");
+            //disable liner
+            return [];
+        }
+    }
+
+    public function getLinerArray($type, $linerRabbetDepthCheck, $minRabbetDepth, $frameRabbetDepth, $defaultLinerSku){
+        $type = trim($type);
+        $linerArray = [];
+
+//        $linerData = array(
+//            0 =>
+//                array(
+//                    "sku" => 'L0023',
+//                    "name" => 'Liner L0023',
+//                    "type" => 'Liner',
+//                    "depth" => 1.375,
+//                    //"depth" => 0.75,
+//                    "rabbet_depth" => 0.375,
+//                    "color" => 'Antique Gold',
+//                    "color_family" => 'Gold Family'
+//                ),
+//            1 =>
+//                array(
+//                    "sku" => 'L0004',
+//                    "name" => 'Liner L0004',
+//                    "type" => 'Liner',
+//                    "depth" => 0.56,
+//                    "rabbet_depth" => 0.25,
+//                    "color" => 'Antique Gold test3',
+//                    "color_family" => 'Gold test3'
+//                ),
+//            2 =>
+//                array(
+//                    "sku" => 'L00013',
+//                    "name" => 'Liner L00013',
+//                    "type" => 'Liner',
+//                    "depth" => 0.68,
+//                    "rabbet_depth" => 0.25,
+//                    "color" => 'Antique Gold test3',
+//                    "color_family" => 'Gold test3'
+//                ));
+
+        $linerData = $this->getLinerCollection();
+
+        $logger = \Magento\Framework\App\ObjectManager::getInstance()->get(\Psr\Log\LoggerInterface::class);
+        $logger->info('test');
+       // $logger->info(print_r(count($linerData), true));
+
+        foreach($linerData as $key => $data) {
+            $linerHeight = $data['m_liner_depth'];
+            $linerRabbetDepth = $data['m_liner_rabbet_depth'];
+
+            $linerCheck = 0;
+
+            if ($linerRabbetDepthCheck) {
+                if (($linerRabbetDepth >= $minRabbetDepth)) {
+                    $linerCheck = 1;
+                }
+            } else {
+                $linerCheck = 1;
+            }
+
+            if ($type == 'default') {
+                $linerArray = [];
+                if ($defaultLinerSku == $data['m_sku']) {
+                    $linerArray = $data;
+                    $logger->info("if");
+                   // $logger->info(print_r($linerArray, true));
+                    return $linerArray;
+                } else {
+                    $logger->info("else");
+                    return [];
+                }
+            }
+
+            if (($linerHeight <= $frameRabbetDepth) && ($linerCheck) && (($linerHeight - $linerRabbetDepth + $minRabbetDepth) <= $frameRabbetDepth)) {
+                $linerArray[] = $data;
+
+            }
+        }// $logger->info(print_r($linerArray, true));
+        return $linerArray;
+    }
+
+    public function getMatCollection()
+    {
+        $optionId = $this->eavConfig->getAttribute('catalog_product', 'mat_type')->getSource()->getOptionId('Standard');
+        $productCollection = $this->getProductCollection('Mat', 'mat_type', $optionId);
+
+        $finalProducts = array();
+        foreach ($productCollection as $item) {
+            $finalProduct['m_sku'] = $item->getSku();
+            $finalProduct['m_name'] = $item->getName();
+            $finalProduct['m_status'] = $item->getStatus();
+            $finalProduct['m_mat_type'] = $this->getAttributeValue($item, 'mat_type');
+            $finalProduct['m_color_mat'] = $item->getColorMat();
+            $finalProduct['m_color_family'] = $item->getColorMatFamily();
+            $finalProduct['m_filter_thickness'] = $item->getFilterThickness();
+            $finalProducts[] = $finalProduct;
+        }
+        return $finalProducts;
+    }
+
+    public function getLinerCollection()
+    {
+        $optionId = $this->eavConfig->getAttribute('catalog_product', 'frame_type')->getSource()->getOptionId('Standard');
+        $productCollection = $this->getProductCollection('Frame', 'frame_type', $optionId);
+        $finalProducts = array();
+        foreach ($productCollection as $item) {
+            $finalProduct['m_sku'] =  $item->getSku();
+            $finalProduct['m_name'] =  $item->getName();
+            $finalProduct['m_liner_type'] =  $this->getAttributeValue($item, 'frame_type');
+            $finalProduct['m_liner_depth'] =  $item->getFrameWidth();
+            $finalProduct['m_liner_rabbet_depth'] =  $item->getFrameRabbetDepth();
+            $finalProduct['m_color_liner'] =  $this->getAttributeValue($item, 'color_frame');
+            $finalProduct['m_color_family'] =  $this->getAttributeValue($item, 'color_family_frame');
+            $finalProducts[] = $finalProduct;
+        }
+        return $finalProducts;
+    }
+
+    public function getProductCollection($attrSetName, $attrCode, $optionId)
+    {
+        $attributeSetCollection = $this->eavCollectionFactory->create();
+        $attributeSetCollection->addFieldToFilter('entity_type_id', 4)->addFieldToFilter('attribute_set_name', $attrSetName);
+        $attrSet = current($attributeSetCollection->getData());
+        $attributeSetId = $attrSet["attribute_set_id"];
+    
+        $productCollection = $this->productCollectionFactory->create();
+        $productCollection->addAttributeToSelect('attribute_set_id', $attributeSetId)->addAttributeToFilter($attrCode, $optionId)->addAttributeToSelect("*");
+        return $productCollection;
+    }
+
+    public function getAttributeValue($product, $attrCode)
+    {
+        $productFactory = $this->productFactory->create()->load($product->getId());
+        return $productFactory->getResource()->getAttribute($attrCode)->getFrontend()->getValue($productFactory);
     }
 
     public function getMediaData($selectedMediumOption)

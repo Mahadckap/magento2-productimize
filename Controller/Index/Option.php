@@ -30,25 +30,31 @@ class Option extends Action
         try {
             $resultJson = $this->_resultJsonFactory->create();
             $type = $this->getRequest()->getParam("type");
-            $selectedMediumOption = $this->getRequest()->getParam("selectedMedium");
-            $selectedTreatmentOption = $this->getRequest()->getParam("selectedTreatment");
             $finalArray = [];
 
             if ($type == "size") {
+                $selectedMediumOption = $this->getRequest()->getParam("selectedMedium");
+                $selectedTreatmentOption = $this->getRequest()->getParam("selectedTreatment");
                 $finalArray = $this->_calc->getSizeCalculation($selectedMediumOption, $selectedTreatmentOption);
-            }
-
-            if ($type == "liner") {
-                $finalArray = $this->_calc->getLinerCalculation($selectedMediumOption, $selectedTreatmentOption);
+            } elseif ($type == "liner") {
+                $linerParams = $this->getRequest()->getParam('payload');
+                $finalArray = $this->_calc->getLinerCalculation($linerParams);
+                //echo "<pre>";print_r($finalArray);exit;
+            } elseif ($type == "topmat") {
+                $topmatParams = $this->getRequest()->getParam('payload');
+                $finalArray = $this->_calc->getTopMatCalculation($topmatParams);
+            } elseif ($type == "bottommat") {
+                $bottommatParams = $this->getRequest()->getParam('payload');
+                $finalArray = $this->_calc->getBottomMatCalculation($bottommatParams);
             }
             $result['status'] = __('true');
             $result['content'] = $finalArray;
             return $resultJson->setData($result);
-
         } catch (\Exception $e) {
             $this->_logger->info(print_r($e->getMessage(), true));
-            $status['error'] = __('error');
-            return $resultJson->setData($e->getMessage());
+            $result['status'] = __('error');
+            $result['info'] = $e->getMessage();
+            return $resultJson->setData($result);
         }
 
     }
